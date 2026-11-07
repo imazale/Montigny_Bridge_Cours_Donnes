@@ -125,6 +125,9 @@
 				resultDiv.innerHTML = "";
 			}
 			
+			// Récupérer les donnes jouées depuis le localStorage une seule fois pour optimiser
+			const jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
+			
 			// Filtrer les lignes qui correspondent à la famille sélectionnée
 			const lignesFiltrees = allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleSelectionnee);
 
@@ -135,13 +138,13 @@
 			lignesFiltrees.forEach(row => {
 				const tr = document.createElement('tr');
 				tr.className = "border-b hover:bg-slate-50 transition";
-				// Vérifier si la donne a déjà été jouée pour adapter l'affichage (optionnel)
+				
+				// Clé unique identique à celle enregistrée au clic sur "Jouer"
 				const cleDonne = `${row.FULL_SOURCE}_${row.DONNE}`;
-				const jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
 				const dejaJouee = jouees.includes(cleDonne);
-
-				// Couleur de fond légère si déjà jouée (ex: vert très pale)
-				const trClass = dejaJouee 
+				
+				// Appliquer la couleur de fond verte si déjà jouée
+				tr.className = dejaJouee 
 					? "border-b bg-emerald-50/60 hover:bg-emerald-50 transition" 
 					: "border-b hover:bg-slate-50 transition";
 				
@@ -202,6 +205,9 @@
 
 	// Fonction pour enregistrer une donne comme jouée
 	function marquerCommeJouee(fullSource, numeroDonne) {
+	
+		console.log("marquerCommeJouee);
+		
 		// Clé unique pour identifier la donne (ex: chemin + numéro)
 		const cleDonne = `${fullSource}_${numeroDonne}`;
 		
