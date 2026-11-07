@@ -55,6 +55,7 @@
 		Papa.parse("data/recapitulatif_donnes.csv", {
 			download: true,
 			header: true,
+			delimiter: ";",
 			complete: function(results) {
 				// Filtrer les lignes valides (qui contiennent au moins une donne)
 				allData = results.data.filter(row => row.DONNE && row.DONNE.trim() !== "");
