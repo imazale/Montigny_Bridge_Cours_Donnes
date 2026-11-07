@@ -57,6 +57,14 @@
 			header: true,
 			delimiter: ";",
 			complete: function(results) {
+			
+			    console.log("Nombre total de lignes lues :", results.data.length);
+                console.log("Première ligne brute :", results.data[0]);
+                console.log("Noms des colonnes détectées :", results.meta.fields);
+
+				// Filtrer les lignes valides
+				allData = results.data.filter(row => row.DONNE && row.DONNE.trim() !== "");
+                console.log("Lignes après filtre :", allData.length);
 				// Filtrer les lignes valides (qui contiennent au moins une donne)
 				allData = results.data.filter(row => row.DONNE && row.DONNE.trim() !== "");
 				
