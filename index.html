@@ -15,6 +15,22 @@
         </header>
 
         <div class="overflow-x-auto">
+		
+			<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+				<!-- Menu déroulant des familles -->
+				<div class="flex items-center gap-3 w-full sm:w-auto">
+					<label for="famille-select" class="font-semibold text-slate-700 text-sm">📁 Famille :</label>
+					<select id="famille-select" class="flex-1 sm:flex-none px-3 py-2 border border-slate-300 rounded-md bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+						<!-- Les options seront ajoutées automatiquement par le script -->
+					</select>
+				</div>
+
+				<!-- Compteur de donnes -->
+				<div class="text-sm font-medium text-slate-600">
+					📚 Donnes disponibles : <span id="total-donnes" class="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md font-bold">0</span>
+				</div>
+			</div>
+			
             <table class="w-full text-left border-collapse" id="table-donnes">
                 <thead>
                     <tr class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider">
@@ -34,37 +50,75 @@
     <!-- Script pour lire automatiquement le fichier CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
-        Papa.parse("data/recapitulatif_donnes.csv", {
-            download: true,
-            header: true,
-            delimiter: ";",
-            complete: function(results) {
-                const tbody = document.querySelector("#table-donnes tbody");
-                tbody.innerHTML = "";
+		let allData = []; // Variable globale pour stocker toutes les données du CSV
 
-                results.data.forEach(row => {
-                    if (!row.DONNE || !row.FILE) return;
+		Papa.parse("data/recapitulatif_donnes.csv", {
+			download: true,
+			header: true,
+			complete: function(results) {
+				// Filtrer les lignes valides (qui contiennent au moins une donne)
+				allData = results.data.filter(row => row.DONNE && row.DONNE.trim() !== "");
+				
+				// 1. Extraire la liste unique des familles présentes dans le CSV
+				const famillesSet = new Set();
+				allData.forEach(row => {
+					if (row.FAMILLE) {
+						famillesSet.add(row.FAMILLE.trim());
+					}
+				});
+				const familles = Array.from(famillesSet).sort();
 
-                    // Nettoyage du nom du fichier source pour l'affichage (garde juste le nom du fichier)
-                    let sourceNom = row.FULL_SOURCE.split("\\").pop().split("/").pop();
+				// 2. Remplir dynamiquement le menu déroulant
+				const select = document.getElementById('famille-select');
+				select.innerHTML = ""; // Vider au cas où
+				
+				familles.forEach((fam, index) => {
+					const option = document.createElement('option');
+					option.value = fam;
+					option.textContent = fam;
+					select.appendChild(option);
+				});
 
-                    let tr = document.createElement("tr");
-                    tr.className = "hover:bg-slate-50 transition-colors";
+				// 3. Afficher par défaut la première famille de la liste (au lieu de tout afficher)
+				if (familles.length > 0) {
+					select.value = familles[0];
+					renderTable(familles[0]);
+				}
 
-                    tr.innerHTML = `
-                        <td class="py-3 px-4 text-slate-700 font-medium truncate max-w-xs" title="${sourceNom}">${sourceNom}</td>
-                        <td class="py-3 px-4 font-bold text-blue-600">Donne ${row.DONNE}</td>
-                        <td class="py-3 px-4 text-center">
-                            ${row.LINK ? `<a href="${row.LINK}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md shadow-sm transition">Rejouer la donne ↗</a>` : '<span class="text-slate-400 text-xs">Aucun lien</span>'}
-                        </td>
-                        <td class="py-3 px-4 text-center">
-                            <a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        });
+				// 4. Écouter les changements de sélection pour filtrer instantanément
+				select.addEventListener('change', function() {
+					renderTable(this.value);
+				});
+			}
+		});
+
+		// Fonction pour filtrer et afficher le tableau selon la famille choisie
+		function renderTable(familleSelectionnee) {
+			const tbody = document.getElementById('table-body');
+			tbody.innerHTML = ""; // Vider le tableau
+
+			// Filtrer les lignes qui correspondent à la famille sélectionnée
+			const lignesFiltrees = allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleSelectionnee);
+
+			// Mettre à jour le compteur du nombre de donnes pour cette famille
+			document.getElementById('total-donnes').innerText = lignesFiltrees.length;
+
+			// Remplir le tableau avec les lignes filtrées
+			lignesFiltrees.forEach(row => {
+				const tr = document.createElement('tr');
+				tr.className = "border-b hover:bg-slate-50 transition";
+				
+				tr.innerHTML = `
+					<td class="py-3 px-4 font-semibold text-slate-700">${row.FAMILLE || ''}</td>
+					<td class="py-3 px-4">${row.DONNE || ''}</td>
+					<td class="py-3 px-4">${row.CONTRAT || ''}</td>
+					<td class="py-3 px-4 text-center">
+						<a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>
+					</td>
+				`;
+				tbody.appendChild(tr);
+			});
+		}		
     </script>
 </body>
 </html>
