@@ -15,38 +15,38 @@
         </header>
 
         <div class="overflow-x-auto">
-		
-			<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-				<!-- Menu déroulant des familles -->
-				<div class="flex items-center gap-3 w-full sm:w-auto">
-					<label for="famille-select" class="font-semibold text-slate-700 text-sm">📁 Famille :</label>
-					<select id="famille-select" class="flex-1 sm:flex-none px-3 py-2 border border-slate-300 rounded-md bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
-						<!-- Les options seront ajoutées automatiquement par le script -->
-					</select>
+
+			<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6 space-y-4">
+				
+				<!-- 1. Sélection de la famille et 2. Compteur de donnes -->
+				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+					<div class="w-full sm:w-2/3">
+						<label for="famille-select" class="block text-sm font-medium text-slate-700 mb-1">Sélectionner une famille :</label>
+						<select id="famille-select" onchange="onFamilleChange(this.value)" class="w-full p-2.5 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+							<!-- Les options s'injecteront ici -->
+						</select>
+					</div>
+					
+					<!-- Le compteur -->
+					<div class="flex items-center gap-2 sm:self-end">
+						<span class="text-sm text-slate-600">Donnes disponibles :</span>
+						<span id="total-donnes" class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-md font-bold text-sm">0</span>
+					</div>
 				</div>
 
-				<!-- Compteur de donnes -->
-				<div class="text-sm font-medium text-slate-600">
-					📚 Donnes disponibles : <span id="total-donnes" class="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md font-bold">0</span>
+				<!-- 3. Bouton Aléatoire placé sous la famille -->
+				<div>
+					<button onclick="tirerDonneAleatoire()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex items-center gap-2">
+						<span>🎲</span> Tirer une donne au hasard dans cette famille
+					</button>
+					
+					<!-- Conteneur qui affichera la donne tirée (masqué par défaut) -->
+					<div id="random-result" class="hidden mt-3 bg-indigo-50 border border-indigo-200 rounded-xl p-4 shadow-sm transition-all">
+						<!-- Le résultat du tirage s'injectera ici -->
+					</div>
 				</div>
 				
-				<!-- Bloc Mode Aléatoire -->
-				<div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-					<div>
-						<h3 class="font-semibold text-indigo-900 text-sm">Mode Défi Aléatoire</h3>
-						<p class="text-xs text-indigo-700">Envie d'un entraînement surprise ? Piochez une donne au hasard parmi toute la collection.</p>
-					</div>
-					<button onclick="tirerDonneAleatoire()" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex items-center justify-center gap-2">
-						<span>🎲</span> Tirer une donne au hasard
-					</button>
-				</div>
-
-				<!-- Conteneur qui affichera la donne tirée (masqué par défaut) -->
-				<div id="random-result" class="hidden bg-white border border-indigo-200 rounded-xl p-4 mb-6 shadow-md transition-all">
-					<!-- Le contenu sera injecté ici dynamiquement -->
-				</div>
-			</div>
-			
+			</div>		
             <table class="w-full text-left border-collapse" id="table-donnes">
                 <thead>
                     <tr class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider">
@@ -67,17 +67,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
 		let allData = []; // Variable globale pour stocker toutes les données du CSV
-
+		
 		Papa.parse("data/recapitulatif_donnes.csv", {
 			download: true,
 			header: true,
 			delimiter: ";",
 			complete: function(results) {
 			
-			    console.log("Nombre total de lignes lues :", results.data.length);
-                console.log("Première ligne brute :", results.data[0]);
-                console.log("Noms des colonnes détectées :", results.meta.fields);
-
 				// Filtrer les lignes valides
 				allData = results.data.filter(row => row.DONNE && row.DONNE.trim() !== "");
                 console.log("Lignes après filtre :", allData.length);
@@ -121,7 +117,14 @@
 		function renderTable(familleSelectionnee) {
 			const tbody = document.getElementById('table-body');
 			tbody.innerHTML = ""; // Vider le tableau
-
+			
+			// Masquer et vider le résultat aléatoire lors d'un changement de famille
+			const resultDiv = document.getElementById('random-result');
+			if (resultDiv) {
+				resultDiv.classList.add('hidden');
+				resultDiv.innerHTML = "";
+			}
+			
 			// Filtrer les lignes qui correspondent à la famille sélectionnée
 			const lignesFiltrees = allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleSelectionnee);
 
