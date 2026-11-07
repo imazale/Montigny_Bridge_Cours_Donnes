@@ -124,47 +124,48 @@
 				resultDiv.classList.add('hidden');
 				resultDiv.innerHTML = "";
 			}
-			
+
 			// Récupérer les donnes jouées depuis le localStorage une seule fois pour optimiser
 			const jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
-			
+
 			// Filtrer les lignes qui correspondent à la famille sélectionnée
 			const lignesFiltrees = allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleSelectionnee);
 
-			// Mettre à jour le compteur du nombre de donnes pour cette famille
+			// Mettre à jour le compteur du nombre de donnes
 			document.getElementById('total-donnes').innerText = lignesFiltrees.length;
 
 			// Remplir le tableau avec les lignes filtrées
 			lignesFiltrees.forEach(row => {
 				const tr = document.createElement('tr');
-				tr.className = "border-b hover:bg-slate-50 transition";
 				
 				// Clé unique identique à celle enregistrée au clic sur "Jouer"
 				const cleDonne = `${row.FULL_SOURCE}_${row.DONNE}`;
 				const dejaJouee = jouees.includes(cleDonne);
-				
+
 				// Appliquer la couleur de fond verte si déjà jouée
 				tr.className = dejaJouee 
 					? "border-b bg-emerald-50/60 hover:bg-emerald-50 transition" 
 					: "border-b hover:bg-slate-50 transition";
 				
+				// Bouton Actions (LINK) avec appel de marquerCommeJouee et rechargement visuel
 				const lienHtml = row.LINK && row.LINK.trim() !== ""
 					? `<a href="${row.LINK}" target="_blank" onclick="marquerCommeJouee('${row.FULL_SOURCE.replace(/'/g, "\\'")}', '${row.DONNE}')" class="inline-flex items-center px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-md transition">Jouer ↗</a>` 
 					: '';
+
 				tr.innerHTML = `
-					<td class="py-3 px-4 font-semibold text-slate-700">${row.FULL_SOURCE || ''}</td>
-					<td class="py-3 px-4">${row.DONNE || ''}</td>
+					<td class="py-3 px-4 font-mono text-xs text-slate-600 truncate max-w-xs" title="${row.FULL_SOURCE || ''}">${row.FULL_SOURCE || ''}</td>
+					<td class="py-3 px-4 font-semibold text-slate-700">${row.DONNE || ''}</td>
 					<td class="py-3 px-4 text-center">
 						${lienHtml}
 					</td>
 					<td class="py-3 px-4 text-center">
-						<a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>
+						<a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>
 					</td>
 				`;
 				tbody.appendChild(tr);
 			});
 		}
-
+		
         // Fonction pour tirer une donne au hasard parmi toutes les données chargées
 		function tirerDonneAleatoire() {
 			if (allData.length === 0) return;
