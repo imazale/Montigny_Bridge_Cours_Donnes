@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cours de Bridge - Répertoire des Donnes</title>
+    <!-- Utilisation du design moderne Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen py-8 px-4">
+    <div class="max-w-5xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden p-6 md:p-8">
+        <header class="border-b border-slate-200 pb-4 mb-6">
+            <h1 class="text-2xl font-bold text-slate-900">🎴 Cours de Bridge - Donnes et Exercices</h1>
+            <p class="text-sm text-slate-500 mt-1">Rejouez les donnes en ligne et visionnez les commentaires du formateur.</p>
+        </header>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse" id="table-donnes">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider">
+                        <th class="py-3 px-4 font-semibold">Fichier Source</th>
+                        <th class="py-3 px-4 font-semibold">Donne n°</th>
+                        <th class="py-3 px-4 font-semibold text-center">En Ligne</th>
+                        <th class="py-3 px-4 font-semibold text-center">Feuillet PDF</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 text-sm">
+                    <!-- Les lignes seront chargées dynamiquement depuis le CSV -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Script pour lire automatiquement le fichier CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script>
+        Papa.parse("data/recapitulatif_donnes.csv", {
+            download: true,
+            header: true,
+            delimiter: ";",
+            complete: function(results) {
+                const tbody = document.querySelector("#table-donnes tbody");
+                tbody.innerHTML = "";
+
+                results.data.forEach(row => {
+                    if (!row.DONNE || !row.FILE) return;
+
+                    // Nettoyage du nom du fichier source pour l'affichage (garde juste le nom du fichier)
+                    let sourceNom = row.FULL_SOURCE.split("\\").pop().split("/").pop();
+
+                    let tr = document.createElement("tr");
+                    tr.className = "hover:bg-slate-50 transition-colors";
+
+                    tr.innerHTML = `
+                        <td class="py-3 px-4 text-slate-700 font-medium truncate max-w-xs" title="${sourceNom}">${sourceNom}</td>
+                        <td class="py-3 px-4 font-bold text-blue-600">Donne ${row.DONNE}</td>
+                        <td class="py-3 px-4 text-center">
+                            ${row.LINK ? `<a href="${row.LINK}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md shadow-sm transition">Rejouer la donne ↗</a>` : '<span class="text-slate-400 text-xs">Aucun lien</span>'}
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
