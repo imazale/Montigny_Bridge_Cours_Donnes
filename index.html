@@ -29,6 +29,22 @@
 				<div class="text-sm font-medium text-slate-600">
 					📚 Donnes disponibles : <span id="total-donnes" class="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md font-bold">0</span>
 				</div>
+				
+				<!-- Bloc Mode Aléatoire -->
+				<div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+					<div>
+						<h3 class="font-semibold text-indigo-900 text-sm">Mode Défi Aléatoire</h3>
+						<p class="text-xs text-indigo-700">Envie d'un entraînement surprise ? Piochez une donne au hasard parmi toute la collection.</p>
+					</div>
+					<button onclick="tirerDonneAleatoire()" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex items-center justify-center gap-2">
+						<span>🎲</span> Tirer une donne au hasard
+					</button>
+				</div>
+
+				<!-- Conteneur qui affichera la donne tirée (masqué par défaut) -->
+				<div id="random-result" class="hidden bg-white border border-indigo-200 rounded-xl p-4 mb-6 shadow-md transition-all">
+					<!-- Le contenu sera injecté ici dynamiquement -->
+				</div>
 			</div>
 			
             <table class="w-full text-left border-collapse" id="table-donnes">
@@ -131,6 +147,44 @@
 				`;
 				tbody.appendChild(tr);
 			});
+		}
+
+        // Fonction pour tirer une donne au hasard parmi toutes les données chargées
+		function tirerDonneAleatoire() {
+			if (allData.length === 0) return;
+
+			// Choisir un index aléatoire
+			const randomIndex = Math.floor(Math.random() * allData.length);
+			const row = allData[randomIndex];
+
+			const resultDiv = document.getElementById('random-result');
+			resultDiv.classList.remove('hidden');
+
+			// Générer les boutons d'action
+			const lienHtml = row.LINK && row.LINK.trim() !== ""
+				? `<a href="${row.LINK}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition shadow-sm">Jouer ↗</a>` 
+				: '<span class="text-xs text-slate-400">Pas de lien de jeu</span>';
+
+			const pdfHtml = row.FILE && row.FILE.trim() !== ""
+				? `<a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>`
+				: '';
+
+			// Injecter la carte de résultat
+			resultDiv.innerHTML = `
+				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+					<div>
+						<div class="flex items-center gap-2 mb-1">
+							<span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-semibold rounded">${row.FAMILLE || 'Famille'}</span>
+							<span class="text-xs font-bold text-slate-700">Donne n° ${row.DONNE}</span>
+						</div>
+						<p class="font-mono text-xs text-slate-500 break-all" title="${row.FULL_SOURCE}">${row.FULL_SOURCE}</p>
+					</div>
+					<div class="flex items-center gap-2 self-end md:self-center shrink-0">
+						${lienHtml}
+						${pdfHtml}
+					</div>
+				</div>
+			`;
 		}		
     </script>
 </body>
