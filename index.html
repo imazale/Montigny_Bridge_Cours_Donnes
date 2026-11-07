@@ -34,10 +34,10 @@
             <table class="w-full text-left border-collapse" id="table-donnes">
                 <thead>
                     <tr class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider">
-                        <th class="py-3 px-4 font-semibold">Fichier Source</th>
-                        <th class="py-3 px-4 font-semibold">Donne n°</th>
-                        <th class="py-3 px-4 font-semibold text-center">En Ligne</th>
-                        <th class="py-3 px-4 font-semibold text-center">Feuillet PDF</th>
+                        <th class="py-3 px-4 font-semibold">Source</th>
+                        <th class="py-3 px-4 font-semibold">Donne</th>
+                        <th class="py-3 px-4 font-semibold text-center">Actions</th>
+                        <th class="py-3 px-4 font-semibold text-center">Commentaires</th>
                     </tr>
                 </thead>
                 <tbody id="table-body" class="divide-y divide-slate-200 text-sm">
@@ -116,11 +116,15 @@
 			lignesFiltrees.forEach(row => {
 				const tr = document.createElement('tr');
 				tr.className = "border-b hover:bg-slate-50 transition";
-				
+				const lienHtml = row.LINK 
+					? `<a href="${row.LINK}" target="_blank" class="inline-flex items-center px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-md transition">Jouer ↗</a>` 
+					: '';
 				tr.innerHTML = `
-					<td class="py-3 px-4 font-semibold text-slate-700">${row.FAMILLE || ''}</td>
+					<td class="py-3 px-4 font-semibold text-slate-700">${row.FULL_SOURCE || ''}</td>
 					<td class="py-3 px-4">${row.DONNE || ''}</td>
-					<td class="py-3 px-4">${row.CONTRAT || ''}</td>
+					<td class="py-3 px-4 text-center">
+						${lienHtml}
+					</td>
 					<td class="py-3 px-4 text-center">
 						<a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>
 					</td>
