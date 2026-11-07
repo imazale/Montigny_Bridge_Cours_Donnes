@@ -135,8 +135,18 @@
 			lignesFiltrees.forEach(row => {
 				const tr = document.createElement('tr');
 				tr.className = "border-b hover:bg-slate-50 transition";
-				const lienHtml = row.LINK 
-					? `<a href="${row.LINK}" target="_blank" class="inline-flex items-center px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-md transition">Jouer ↗</a>` 
+				// Vérifier si la donne a déjà été jouée pour adapter l'affichage (optionnel)
+				const cleDonne = `${row.FULL_SOURCE}_${row.DONNE}`;
+				const jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
+				const dejaJouee = jouees.includes(cleDonne);
+
+				// Couleur de fond légère si déjà jouée (ex: vert très pale)
+				const trClass = dejaJouee 
+					? "border-b bg-emerald-50/60 hover:bg-emerald-50 transition" 
+					: "border-b hover:bg-slate-50 transition";
+				
+				const lienHtml = row.LINK && row.LINK.trim() !== ""
+					? `<a href="${row.LINK}" target="_blank" onclick="marquerCommeJouee('${row.FULL_SOURCE.replace(/'/g, "\\'")}', '${row.DONNE}')" class="inline-flex items-center px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-md transition">Jouer ↗</a>` 
 					: '';
 				tr.innerHTML = `
 					<td class="py-3 px-4 font-semibold text-slate-700">${row.FULL_SOURCE || ''}</td>
@@ -165,9 +175,9 @@
 
 			// Générer les boutons d'action
 			const lienHtml = row.LINK && row.LINK.trim() !== ""
-				? `<a href="${row.LINK}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition shadow-sm">Jouer ↗</a>` 
-				: '<span class="text-xs text-slate-400">Pas de lien de jeu</span>';
-
+				? `<a href="${row.LINK}" target="_blank" onclick="marquerCommeJouee('${row.FULL_SOURCE.replace(/'/g, "\\'")}', '${row.DONNE}')" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition shadow-sm">Jouer ↗</a>` 
+				: '<span class="text-xs text-slate-400">Pas de lien</span>';
+				
 			const pdfHtml = row.FILE && row.FILE.trim() !== ""
 				? `<a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>`
 				: '';
@@ -188,7 +198,22 @@
 					</div>
 				</div>
 			`;
-		}		
+		}
+
+	// Fonction pour enregistrer une donne comme jouée
+	function marquerCommeJouee(fullSource, numeroDonne) {
+		// Clé unique pour identifier la donne (ex: chemin + numéro)
+		const cleDonne = `${fullSource}_${numeroDonne}`;
+		
+		// Récupérer la liste existante depuis le localStorage
+		let jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
+		
+		// Si elle n'y est pas déjà, on l'ajoute
+		if (!jouees.includes(cleDonne)) {
+			jouees.push(cleDonne);
+			localStorage.setItem('bridge_donnes_jouees', JSON.stringify(jouees));
+		}
+	}		
     </script>
 </body>
 </html>
