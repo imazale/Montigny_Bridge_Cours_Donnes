@@ -355,12 +355,12 @@
 		renderTable(familleSelectionnee);
 	}	
 
-	// Fonction ultime pour télécharger un vrai .xlsx propre et fonctionnel
+	// Fonction définitive pour générer un vrai fichier .xlsx avec des liens cliquables
 	function telechargerExcel() {
 		const select = document.getElementById('famille-select');
 		const familleActive = select ? select.value.trim() : "";
 
-		// Remplace par l'URL exacte de ton dépôt GitHub Pages
+		// Pensez à remplacer par l'URL exacte de votre dépôt GitHub Pages
 		const BASE_URL_GITHUB = "https://imazale.github.io/Montigny_Bridge_Cours_Donnes/data/";
 
 		const donneesAExporter = familleActive 
@@ -372,14 +372,14 @@
 			return;
 		}
 
-		// 1. Création des en-têtes du tableau
+		// 1. En-têtes du tableau
 		const aoa = [
 			["FAMILLE", "FICHIER", "DONNE", "LIEN_BRIDGE_TRAINING", "LIEN_COMMENTAIRES"]
 		];
 
-		const liensHypertextes = [];
+		const formulasMeta = [];
 
-		// 2. Remplissage des lignes de données
+		// 2. Remplissage des données (cellules de liens vides au départ dans le tableau brut)
 		donneesAExporter.forEach((row, index) => {
 			const famille = row.FAMILLE || "";
 			const fichier = row.FULL_SOURCE || ""; 
@@ -387,39 +387,39 @@
 			const urlBridge = row.LINK ? row.LINK.trim() : "";
 			const urlCommentaires = row.FILE ? `${BASE_URL_GITHUB}${row.FILE}` : "";
 
-			// On met le texte simple dans le tableau de base
-			aoa.push([
-				famille,
-				fichier,
-				donne,
-				urlBridge !== "" ? "Jouer" : "",
-				urlCommentaires !== "" ? "Commentaires" : ""
-			]);
+			aoa.push([famille, fichier, donne, "", ""]);
 
-			// On mémorise les coordonnées des cellules qui doivent devenir des liens cliquables
-			// (Ligne index + 1 car la ligne 0 est l'en-tête)
-			const rowIndex = index + 1;
-			if (urlBridge) {
-				liensHypertextes.push({ r: rowIndex, c: 3, url: urlBridge });
-			}
-			if (urlCommentaires) {
-				liensHypertextes.push({ r: rowIndex, c: 4, url: urlCommentaires });
-			}
+			const rowIndex = index + 1; // Ligne 0 = en-tête
+			
+			// IMPORTANT : Utilisation obligatoire de "HYPERLINK" en anglais pour SheetJS
+			formulasMeta.push({
+				rowIndex,
+				bridge: urlBridge !== "" ? `HYPERLINK("${urlBridge}", "Jouer")` : "",
+				commentaires: urlCommentaires !== "" ? `HYPERLINK("${urlCommentaires}", "Commentaires")` : ""
+			});
 		});
 
-		// 3. Génération de la feuille de calcul via SheetJS
+		// 3. Création de la feuille Excel
 		const worksheet = XLSX.utils.aoa_to_sheet(aoa);
 
-		// 4. Injection propre des métadonnées de liens hypertextes natifs
-		liensHypertextes.forEach(item => {
-			const cellRef = XLSX.utils.encode_cell({ r: item.r, c: item.c });
-			if (worksheet[cellRef]) {
-				// Propriété officielle SheetJS pour les liens natifs Excel
-				worksheet[cellRef].l = { Target: item.url, Tooltip: "Cliquer pour ouvrir" };
+		// 4. Injection des formules de liens cliquables natifs
+		formulasMeta.forEach(item => {
+			if (item.bridge) {
+				const cellRef = XLSX.utils.encode_cell({ r: item.rowIndex, c: 3 });
+				if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
+				worksheet[cellRef].f = item.bridge;
+				delete worksheet[cellRef].v;
+			}
+
+			if (item.commentaires) {
+				const cellRef = XLSX.utils.encode_cell({ r: item.rowIndex, c: 4 });
+				if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
+				worksheet[cellRef].f = item.commentaires;
+				delete worksheet[cellRef].v;
 			}
 		});
 
-		// 5. Création du classeur et téléchargement direct du .xlsx
+		// 5. Génération et téléchargement du fichier .xlsx
 		const workbook = XLSX.utils.book_new();
 		XLSX.utils.book_append_sheet(workbook, worksheet, "Donnes Bridge");
 
@@ -430,6 +430,7 @@
 
 		XLSX.writeFile(workbook, filename);
 	}
+
     </script>
 </body>
 </html>
