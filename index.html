@@ -355,7 +355,7 @@
 		renderTable(familleSelectionnee);
 	}	
 
-	// Fonction pour générer et télécharger un vrai fichier Excel (.xlsx) propre
+	// Fonction pour générer et télécharger un vrai fichier Excel (.xlsx) avec des liens cliquables fonctionnels
 	function telechargerExcel() {
 		const select = document.getElementById('famille-select');
 		const familleActive = select ? select.value.trim() : "";
@@ -372,13 +372,12 @@
 			return;
 		}
 
-		// 1. Préparer les données sous forme de tableau classique (que du texte / chaînes)
+		// 1. En-têtes du fichier Excel
 		const aoa = [
 			["FAMILLE", "FICHIER", "DONNE", "LIEN_BRIDGE_TRAINING", "LIEN_COMMENTAIRES"]
 		];
 
-		// On stocke aussi les URLs en parallèle pour venir les lier proprement après
-		const liensMeta = [];
+		const formulasMeta = [];
 
 		donneesAExporter.forEach(row => {
 			const famille = row.FAMILLE || "";
@@ -387,46 +386,41 @@
 			const urlBridge = row.LINK ? row.LINK.trim() : "";
 			const urlCommentaires = row.FILE ? `${BASE_URL_GITHUB}${row.FILE}` : "";
 
-			aoa.push([
-				famille,
-				fichier,
-				donne,
-				urlBridge !== "" ? "Jouer" : "",
-				urlCommentaires !== "" ? "Commentaires" : ""
-			]);
+			// On ajoute des lignes de texte vides au départ dans le tableau
+			aoa.push([famille, fichier, donne, "", ""]);
 
-			liensMeta.push({
-				bridge: urlBridge,
-				commentaires: urlCommentaires
+			// On prépare les formules Excel associées pour chaque lien
+			formulasMeta.push({
+				bridge: urlBridge !== "" ? `LIEN_HYPERTEXTE("${urlBridge}"; "Jouer")` : "",
+				commentaires: urlCommentaires !== "" ? `LIEN_HYPERTEXTE("${urlCommentaires}"; "Commentaires")` : ""
 			});
 		});
 
-		// 2. Créer la feuille Excel de base
+		// 2. Créer la feuille à partir du tableau
 		const worksheet = XLSX.utils.aoa_to_sheet(aoa);
 
-		// 3. Parcourir les cellules pour ajouter les liens hypertextes natifs sans corrompre le fichier
-		// La ligne d'en-tête est à l'index 0, donc les données commencent à la ligne 1 (ligne 2 dans Excel)
-		liensMeta.forEach((meta, index) => {
+		// 3. Injecter les formules de liens hypertextes propres et cliquables
+		formulasMeta.forEach((meta, index) => {
 			const rowIndex = index + 1; // Ligne 0 = en-tête
 
-			// Colonne D (index 3) -> LIEN_BRIDGE_TRAINING
+			// Colonne D (LIEN_BRIDGE_TRAINING)
 			if (meta.bridge) {
 				const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: 3 });
-				if (worksheet[cellRef]) {
-					worksheet[cellRef].l = { Target: meta.bridge, Tooltip: "Aller sur Bridge Training" };
-				}
+				if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
+				worksheet[cellRef].f = meta.bridge; // Définition de la formule Excel
+				delete worksheet[cellRef].v;      // SheetJS recalcule la valeur à l'ouverture
 			}
 
-			// Colonne E (index 4) -> LIEN_COMMENTAIRES
+			// Colonne E (LIEN_COMMENTAIRES)
 			if (meta.commentaires) {
 				const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: 4 });
-				if (worksheet[cellRef]) {
-					worksheet[cellRef].l = { Target: meta.commentaires, Tooltip: "Voir les commentaires PDF" };
-				}
+				if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
+				worksheet[cellRef].f = meta.commentaires;
+				delete worksheet[cellRef].v;
 			}
 		});
 
-		// 4. Créer le classeur et déclencher le téléchargement
+		// 4. Générer le fichier .xlsx final
 		const workbook = XLSX.utils.book_new();
 		XLSX.utils.book_append_sheet(workbook, worksheet, "Donnes Bridge");
 
