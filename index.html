@@ -42,14 +42,9 @@
 						<span>📥</span> Télécharger le tableau Excel
 					</a>
 					
-					<button onclick="tirerDonneAleatoire()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5"">
-						<span>🎲</span> Tirer une donne au hasard
-					</button>
-					
-					<!-- Conteneur qui affichera la donne tirée (masqué par défaut) -->
-					<div id="random-result" class="hidden mt-3 bg-indigo-50 border border-indigo-200 rounded-xl p-4 shadow-sm transition-all">
-						<!-- Le résultat du tirage s'injectera ici -->
-					</div>
+					<button id="btn-hasard" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
+						<span>🎲</span> Donne au hasard
+					</button>					
 				</div>
 				
 			</div>		
@@ -179,61 +174,33 @@
 				tbody.appendChild(tr);
 			});
 		}
+
+	function tirerDonneAuHasard() {
+		// Récupérer les lignes actuellement affichées (selon la famille sélectionnée)
+		const lignesvisibles = document.querySelectorAll("#ton-tableau-corps tr"); // Remplace par ton sélecteur de lignes
 		
-        // Fonction pour tirer une donne au hasard parmi toutes les données chargées
-		function tirerDonneAleatoire() {
-			// 1. Récupérer la famille active et nettoyer les espaces
-			const select = document.getElementById('famille-select');
-			const familleActive = select ? select.value.trim() : "";
-
-			if (!familleActive) {
-				alert("Veuillez d'abord sélectionner une famille dans le menu déroulant.");
-				return;
-			}
-
-			// 2. Récupérer la liste des donnes déjà jouées depuis le localStorage
-			const jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
-
-			// 3. Filtrer pour ne garder QUE les donnes de la famille qui n'ont PAS ENCORE été jouées
-			const lignesDisponibles = allData.filter(row => {
-				if (!row.FAMILLE) return false;
-				if (row.FAMILLE.trim() !== familleActive) return false;
-
-				// Créer la clé unique de la donne
-				const cleDonne = `${row.FULL_SOURCE}_${row.DONNE}`;
-				
-				// On exclut si elle est déjà dans les jouées
-				return !jouees.includes(cleDonne);
-			});
-
-			// 4. Si toutes les donnes de cette famille ont déjà été jouées !
-			if (lignesDisponibles.length === 0) {
-				const resultDiv = document.getElementById('random-result');
-				resultDiv.classList.remove('hidden');
-				resultDiv.innerHTML = `
-					<div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center justify-between">
-						<span>🎉 Bravo ! Vous avez déjà joué toutes les donnes de cette famille.</span>
-						<button onclick="reinitialiserProgression()" class="underline font-semibold hover:text-amber-900">Réinitialiser</button>
-					</div>
-				`;
-				return;
-			}
-
-			// 5. Choisir un index aléatoire parmi les donnes restantes non jouées
-			const randomIndex = Math.floor(Math.random() * lignesDisponibles.length);
-			const row = lignesDisponibles[randomIndex];
-
-			// 6. MARQUER IMMÉDIATEMENT COMME JOUÉE
-			marquerCommeJouee(row.FULL_SOURCE, row.DONNE);
-			
-			// 7. Ajouter à l'historique et afficher
-			historiqueTirages.unshift(row);
-			if (historiqueTirages.length > 3) {
-				historiqueTirages.pop();
-			}
-
-			afficherResultatEtHistorique();
+		if (lignesvisibles.length === 0) {
+			alert("Aucune donne disponible pour cette sélection !");
+			return;
 		}
+
+		// Choisir un index au hasard
+		const indexAleatoire = Math.floor(Math.random() * lignesvisibles.length);
+		const ligneCible = lignesvisibles[indexAleatoire];
+
+		// 1. Faire défiler la page/le tableau jusqu'à cette ligne
+		ligneCible.scrollIntoView({
+			behavior: "smooth",
+			block: "start" // Place la ligne tout en haut de la zone visible
+		});
+
+		// 2. Petit effet visuel temporaire pour la mettre en valeur (flash subtil)
+		ligneCible.classList.add("bg-emerald-100", "transition-colors", "duration-500");
+		
+		setTimeout(() => {
+			ligneCible.classList.remove("bg-emerald-100");
+		}, 2000); // Retire l'effet après 2 secondes
+	}		
 
 	// Fonction pour enregistrer une donne comme jouée
 	function marquerCommeJouee(fullSource, numeroDonne) {
@@ -389,6 +356,9 @@
 
 	// Appeler la fonction au chargement de la page pour initialiser le lien
 	document.addEventListener('DOMContentLoaded', mettreAJourLienExcel);
+
+	// Relier au bouton
+	document.getElementById("btn-hasard")?.addEventListener("click", tirerDonneAuHasard);	
 	
     </script>
 </body>
