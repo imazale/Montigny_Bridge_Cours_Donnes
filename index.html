@@ -158,9 +158,9 @@
 				const tr = document.createElement('tr');
 				
 				// Clé unique identique à celle enregistrée au clic sur "Jouer"
-				const dejaJouee = jouees.some(item => item.fullSource === row.fullSource && item.numeroDonne === row.numero);
-				console.log("renderTable fullsource:", row.fullSource);
-				console.log("renderTable numero:", row.numero);
+				const dejaJouee = jouees.some(item => item.fullSource === row.FULL_SOURCE && item.numeroDonne === row.DONNE);
+				console.log("renderTable fullsource:", row.FULL_SOURCE);
+				console.log("renderTable numero:", row.DONNE);
 				console.log("renderTable dejaJouee:", dejaJouee);
 				console.log("---", "---");
 
