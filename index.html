@@ -30,8 +30,8 @@
 					
 					<!-- id="total-donnes" : compteur de donnes dans la famille-->
 					<div class="flex items-center gap-2 sm:self-end">
-						<span class="text-sm text-slate-600">Donnes disponibles :</span>
-						<span id="total-donnes" class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-md font-bold text-sm">0</span>
+						<span class="text-sm text-slate-600">Donnes jouées :</span>
+						<span id="nb-jouees">0</span> / <span id="total-donnes">0</span>
 					</div>
 				</div>
 
@@ -146,14 +146,15 @@
 				resultDiv.innerHTML = "";
 			}
 
-			// Récupérer les donnes jouées depuis le localStorage une seule fois pour optimiser
-			const jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
+			const storageKey = `bridge_donnes_jouees_${familleSelectionnee}`;
+			let jouees = JSON.parse(localStorage.getItem(storageKey)) || [];
 
 			// Filtrer les lignes qui correspondent à la famille sélectionnée
 			const lignesFiltrees = allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleSelectionnee);
 
 			// Mettre à jour le compteur du nombre de donnes
 			document.getElementById('total-donnes').innerText = lignesFiltrees.length;
+			document.getElementById('nb-jouees').innerText = jouees.length;
 
 			// Remplir le tableau avec les lignes filtrées
 			lignesFiltrees.forEach(row => {
