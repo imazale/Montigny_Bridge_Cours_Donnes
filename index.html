@@ -326,6 +326,23 @@
 		if (select && select.value) {
 			renderTable(select.value);
 		}
+	}
+
+	// Fonction déclenchée lors du changement de famille dans le menu déroulant
+	function onFamilleChange(famille) {
+		// Nettoyer les espaces superflus de la famille sélectionnée
+		const familleSelectionnee = famille ? famille.trim() : "";
+
+		// 1. Réinitialiser l'historique des tirages aléatoires et masquer le bloc
+		historiqueTirages = [];
+		const resultDiv = document.getElementById('random-result');
+		if (resultDiv) {
+			resultDiv.classList.add('hidden');
+			resultDiv.innerHTML = "";
+		}
+
+		// 2. Mettre à jour le tableau principal avec la nouvelle famille
+		renderTable(familleSelectionnee);
 	}	
     </script>
 </body>
