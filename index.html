@@ -67,6 +67,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
 		let allData = []; // Variable globale pour stocker toutes les données du CSV
+		let historiqueTirages = [];
 		
 		Papa.parse("data/recapitulatif_donnes.csv", {
 			download: true,
@@ -152,11 +153,17 @@
 					? `<a href="${row.LINK}" target="_blank" onclick="marquerCommeJouee('${row.FULL_SOURCE.replace(/'/g, "\\'")}', '${row.DONNE}')" class="inline-flex items-center px-2.5 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-md transition">Jouer ↗</a>` 
 					: '';
 
+				// Petit bouton d'annulation discret qui apparaît uniquement si la donne a été jouée
+				const annulerHtml = dejaJouee
+					? `<button onclick="basculerEtatDonne('${row.FULL_SOURCE.replace(/'/g, "\\'")}', '${row.DONNE}')" class="ml-2 px-2 py-1 bg-slate-300 hover:bg-slate-400 text-slate-700 text-xs font-medium rounded transition" title="Considérer comme non jouée">Remettre non jouée</button>`
+					: '';
+
 				tr.innerHTML = `
 					<td class="py-3 px-4 font-mono text-xs text-slate-600 truncate max-w-xs" title="${row.FULL_SOURCE || ''}">${row.FULL_SOURCE || ''}</td>
 					<td class="py-3 px-4 font-semibold text-slate-700">${row.DONNE || ''}</td>
 					<td class="py-3 px-4 text-center">
 						${lienHtml}
+						${annulerHtml}
 					</td>
 					<td class="py-3 px-4 text-center">
 						<a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>
@@ -232,7 +239,94 @@
 			jouees.push(cleDonne);
 			localStorage.setItem('bridge_donnes_jouees', JSON.stringify(jouees));
 		}
-	}		
+	}	
+
+	// Fonction pour afficher le tirage en cours et l'historique récent
+	function afficherResultatEtHistorique() {
+		const resultDiv = document.getElementById('random-result');
+		resultDiv.classList.remove('hidden');
+
+		if (historiqueTirages.length === 0) return;
+
+		// Le tirage actif est le premier du tableau (index 0)
+		const current = historiqueTirages[0];
+
+		const currentLien = current.LINK && current.LINK.trim() !== ""
+			? `<a href="${current.LINK}" target="_blank" onclick="marquerCommeJouee('${current.FULL_SOURCE.replace(/'/g, "\\'")}', '${current.DONNE}')" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition shadow-sm">Jouer ↗</a>` 
+			: '<span class="text-xs text-slate-400">Pas de lien</span>';
+
+		const currentPdf = current.FILE && current.FILE.trim() !== ""
+			? `<a href="data/${current.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>`
+			: '';
+
+		// Construction du HTML pour le tirage courant
+		let html = `
+			<div>
+				<div class="flex items-center justify-between mb-1.5">
+					<span class="px-2 py-0.5 bg-indigo-200 text-indigo-900 text-xs font-bold rounded">Tirage en cours</span>
+					<span class="text-xs font-bold text-slate-700">Donne n° ${current.DONNE}</span>
+				</div>
+				<div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-lg border border-indigo-100 shadow-sm">
+					<p class="font-mono text-xs text-slate-500 break-all" title="${current.FULL_SOURCE}">${current.FULL_SOURCE}</p>
+					<div class="flex items-center gap-2 shrink-0">
+						${currentLien}
+						${currentPdf}
+					</div>
+				</div>
+			</div>
+		`;
+
+		// S'il y a des éléments précédents dans l'historique (index 1 et 2)
+		if (historiqueTirages.length > 1) {
+			html += `
+				<div class="pt-3 border-t border-indigo-200 mt-3">
+					<h4 class="text-xs font-semibold text-indigo-800 mb-2">Historique récent :</h4>
+					<div class="space-y-1.5">
+			`;
+
+			for (let i = 1; i < historiqueTirages.length; i++) {
+				const past = historiqueTirages[i];
+				const pastLien = past.LINK && past.LINK.trim() !== "" ? `<a href="${past.LINK}" target="_blank" onclick="marquerCommeJouee('${past.FULL_SOURCE.replace(/'/g, "\\'")}', '${past.DONNE}')" class="text-blue-600 hover:underline">Jouer ↗</a>` : '';
+				const pastPdf = past.FILE && past.FILE.trim() !== "" ? `<a href="data/${past.FILE}" target="_blank" class="text-slate-600 hover:underline">PDF ↗</a>` : '';
+				
+				html += `
+					<div class="flex items-center justify-between text-xs bg-white/70 px-3 py-1.5 rounded border border-indigo-100">
+						<span class="font-medium text-slate-700">Donne ${past.DONNE}</span>
+						<span class="font-mono text-slate-400 truncate max-w-xs mx-2" title="${past.FULL_SOURCE}">${past.FULL_SOURCE}</span>
+						<div class="space-x-3 shrink-0">${pastLien} ${pastPdf}</div>
+					</div>
+				`;
+			}
+
+			html += `</div></div>`;
+		}
+
+		resultDiv.innerHTML = html;
+	}
+
+	// Fonction pour basculer l'état d'une donne (jouée <-> non jouée)
+	function basculerEtatDonne(fullSource, numeroDonne) {
+		const cleDonne = `${fullSource}_${numeroDonne}`;
+		let jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
+		
+		const index = jouees.indexOf(cleDonne);
+		if (index > -1) {
+			// Si elle était jouée, on la retire (on la remet en "non jouée")
+			jouees.splice(index, 1);
+		} else {
+			// Sinon, on l'ajoute
+			jouees.push(cleDonne);
+		}
+		
+		// Sauvegarder dans le localStorage
+		localStorage.setItem('bridge_donnes_jouees', JSON.stringify(jouees));
+		
+		// Rafraîchir le tableau pour mettre à jour instantanément les couleurs et les boutons
+		const select = document.getElementById('famille-select');
+		if (select && select.value) {
+			renderTable(select.value);
+		}
+	}	
     </script>
 </body>
 </html>
