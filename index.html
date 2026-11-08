@@ -355,72 +355,88 @@
 		renderTable(familleSelectionnee);
 	}	
 
-	// Fonction pour générer et télécharger un vrai fichier Excel (.xlsx) avec de vrais liens
-function telechargerExcel() {
-    const select = document.getElementById('famille-select');
-    const familleActive = select ? select.value.trim() : "";
+	// Fonction pour générer et télécharger un vrai fichier Excel (.xlsx) propre
+	function telechargerExcel() {
+		const select = document.getElementById('famille-select');
+		const familleActive = select ? select.value.trim() : "";
 
-    // Pensez à remplacer par l'URL exacte de votre dépôt GitHub Pages
-    const BASE_URL_GITHUB = "https://<votre-nom-utilisateur>.github.io/<nom-du-depot>/data/";
+		// Pensez à remplacer par l'URL exacte de votre dépôt GitHub Pages
+		const BASE_URL_GITHUB = "https://imazale.github.io/Montigny_Bridge_Cours_Donnes/data/";
 
-    const donneesAExporter = familleActive 
-        ? allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleActive)
-        : allData;
+		const donneesAExporter = familleActive 
+			? allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleActive)
+			: allData;
 
-    if (donneesAExporter.length === 0) {
-        alert("Aucune donnée à exporter.");
-        return;
-    }
+		if (donneesAExporter.length === 0) {
+			alert("Aucune donnée à exporter.");
+			return;
+		}
 
-    // Préparer les données pour le classeur Excel
-    // L'en-tête de la feuille
-    const aoa = [
-        ["FAMILLE", "FICHIER", "DONNE", "LIEN_BRIDGE_TRAINING", "LIEN_COMMENTAIRES"]
-    ];
+		// 1. Préparer les données sous forme de tableau classique (que du texte / chaînes)
+		const aoa = [
+			["FAMILLE", "FICHIER", "DONNE", "LIEN_BRIDGE_TRAINING", "LIEN_COMMENTAIRES"]
+		];
 
-    donneesAExporter.forEach(row => {
-        const famille = row.FAMILLE || "";
-        const fichier = row.FULL_SOURCE || ""; 
-        const donne = row.DONNE || "";
-        const urlBridge = row.LINK ? row.LINK.trim() : "";
-        const urlCommentaires = row.FILE ? `${BASE_URL_GITHUB}${row.FILE}` : "";
+		// On stocke aussi les URLs en parallèle pour venir les lier proprement après
+		const liensMeta = [];
 
-        // Dans SheetJS, pour créer une cellule avec un lien hypertexte cliquable et un libellé texte :
-        // On utilise un objet { v: "Texte affiché", l: { Target: "URL" } }
-        
-        const cellBridge = urlBridge !== "" 
-            ? { v: "Jouer", l: { Target: urlBridge } } 
-            : { v: "" };
+		donneesAExporter.forEach(row => {
+			const famille = row.FAMILLE || "";
+			const fichier = row.FULL_SOURCE || ""; 
+			const donne = row.DONNE || "";
+			const urlBridge = row.LINK ? row.LINK.trim() : "";
+			const urlCommentaires = row.FILE ? `${BASE_URL_GITHUB}${row.FILE}` : "";
 
-        const cellCommentaires = urlCommentaires !== "" 
-            ? { v: "Commentaires", l: { Target: urlCommentaires } } 
-            : { v: "" };
+			aoa.push([
+				famille,
+				fichier,
+				donne,
+				urlBridge !== "" ? "Jouer" : "",
+				urlCommentaires !== "" ? "Commentaires" : ""
+			]);
 
-        aoa.push([
-            famille,
-            fichier,
-            donne,
-            cellBridge,
-            cellCommentaires
-        ]);
-    });
+			liensMeta.push({
+				bridge: urlBridge,
+				commentaires: urlCommentaires
+			});
+		});
 
-    // Créer une feuille de calcul à partir du tableau de données (AOA)
-    const worksheet = XLSX.utils.aoa_to_sheet(aoa);
+		// 2. Créer la feuille Excel de base
+		const worksheet = XLSX.utils.aoa_to_sheet(aoa);
 
-    // Créer un nouveau classeur (Workbook) et y ajouter la feuille
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Donnes Bridge");
+		// 3. Parcourir les cellules pour ajouter les liens hypertextes natifs sans corrompre le fichier
+		// La ligne d'en-tête est à l'index 0, donc les données commencent à la ligne 1 (ligne 2 dans Excel)
+		liensMeta.forEach((meta, index) => {
+			const rowIndex = index + 1; // Ligne 0 = en-tête
 
-    // Générer le fichier .xlsx et déclencher le téléchargement
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const filename = familleActive 
-        ? `donnes_bridge_${familleActive}_${dateStr}.xlsx` 
-        : `toutes_les_donnes_bridge_${dateStr}.xlsx`;
+			// Colonne D (index 3) -> LIEN_BRIDGE_TRAINING
+			if (meta.bridge) {
+				const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: 3 });
+				if (worksheet[cellRef]) {
+					worksheet[cellRef].l = { Target: meta.bridge, Tooltip: "Aller sur Bridge Training" };
+				}
+			}
 
-    XLSX.writeFile(workbook, filename);
-}
+			// Colonne E (index 4) -> LIEN_COMMENTAIRES
+			if (meta.commentaires) {
+				const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: 4 });
+				if (worksheet[cellRef]) {
+					worksheet[cellRef].l = { Target: meta.commentaires, Tooltip: "Voir les commentaires PDF" };
+				}
+			}
+		});
 
+		// 4. Créer le classeur et déclencher le téléchargement
+		const workbook = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Donnes Bridge");
+
+		const dateStr = new Date().toISOString().slice(0, 10);
+		const filename = familleActive 
+			? `donnes_bridge_${familleActive}_${dateStr}.xlsx` 
+			: `toutes_les_donnes_bridge_${dateStr}.xlsx`;
+
+		XLSX.writeFile(workbook, filename);
+	}
     </script>
 </body>
 </html>
