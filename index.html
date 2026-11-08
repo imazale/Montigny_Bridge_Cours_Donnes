@@ -391,11 +391,11 @@
 
 			// Formule Excel pour afficher "Jouer" avec un lien hypertexte
 			const lienBridgeExcel = urlBridge.trim() !== "" 
-				? `=HYPERLINK("${urlBridge.replace(/"/g, '""')}"; "Jouer")` 
+				? `=LIEN_HYPERTEXTE("${urlBridge.replace(/"/g, '""')}"; "Jouer")` 
 				: "";
 
 			const lienCommentairesExcel = urlCommentaires !== "" 
-            ? `=HYPERLINK("${urlCommentaires.replace(/"/g, '""')}"; "Commentaires")` 
+            ? `=LIEN_HYPERTEXTE("${urlCommentaires.replace(/"/g, '""')}"; "Commentaires")` 
             : "";
 			
 			// Échapper les guillemets éventuels et entourer de guillemets pour sécuriser le CSV
