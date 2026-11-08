@@ -34,10 +34,16 @@
 					</div>
 				</div>
 
-				<!-- 3. Bouton Aléatoire placé sous la famille -->
+
+				<!-- 3. Boutons télécharger et Aléatoire placé sous la famille -->
 				<div>
+
+					<button onclick="telechargerCSV()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition flex items-center gap-1.5">
+						<span>📥</span> Télécharger le tableau (Excel)
+					</button>
+					
 					<button onclick="tirerDonneAleatoire()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex items-center gap-2">
-						<span>🎲</span> Tirer une donne au hasard dans cette famille
+						<span>🎲</span> Tirer une donne au hasard
 					</button>
 					
 					<!-- Conteneur qui affichera la donne tirée (masqué par défaut) -->
@@ -346,6 +352,61 @@
 
 		// 2. Mettre à jour le tableau principal avec la nouvelle famille
 		renderTable(familleSelectionnee);
+	}	
+
+	// Fonction pour générer et télécharger un fichier CSV compatible Excel
+	function telechargerCSV() {
+		// 1. Récupérer la famille active (si un filtre est appliqué) ou exporter tout
+		const select = document.getElementById('famille-select');
+		const familleActive = select ? select.value.trim() : "";
+
+		// Filtrer les données selon la famille sélectionnée (ou prendre tout si rien n'est sélectionné)
+		const donneesAExporter = familleActive 
+			? allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleActive)
+			: allData;
+
+		if (donneesAExporter.length === 0) {
+			alert("Aucune donnée à exporter.");
+			return;
+		}
+
+		// 2. Définir les en-têtes demandés
+		let csvContent = "\uFEFF"; // BOM UTF-8 pour Excel
+		const enTetes = ["FAMILLE", "FICHIER", "DONNE", "LIEN_BRIDGE_TRAINING", "LIEN_COMMENTAIRES"];
+		csvContent += enTetes.join(";") + "\r\n";
+
+		// 3. Remplir les lignes
+		donneesAExporter.forEach(row => {
+			// Adaptation des noms de colonnes de votre objet vers les en-têtes demandés
+			// (En supposant que row.FILE correspond au nom du fichier de commentaires)
+			const famille = row.FAMILLE || "";
+			const fichier = row.FILE || "";
+			const donne = row.DONNE || "";
+			const lienBridge = row.LINK || "";
+			const lienCommentaires = row.FILE ? `data/${row.FILE}` : "";
+
+			// Échapper les guillemets éventuels et entourer de guillemets pour sécuriser le CSV
+			const ligne = [
+				`"${famille.replace(/"/g, '""')}"`,
+				`"${fichier.replace(/"/g, '""')}"`,
+				`"${donne.replace(/"/g, '""')}"`,
+				`"${lienBridge.replace(/"/g, '""')}"`,
+				`"${lienCommentaires.replace(/"/g, '""')}"`
+			];
+
+			csvContent += ligne.join(";") + "\r\n";
+		});
+
+		// 4. Créer un objet Blob et déclencher le téléchargement automatique
+		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		
+		link.setAttribute("href", url);
+		link.setAttribute("download", familleActive ? `donnes_bridge_${familleActive}.csv` : "toutes_les_donnes_bridge.csv");
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
 	}	
     </script>
 </body>
