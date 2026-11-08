@@ -159,6 +159,10 @@
 				
 				// Clé unique identique à celle enregistrée au clic sur "Jouer"
 				const dejaJouee = jouees.some(item => item.fullSource === row.fullSource && item.numeroDonne === row.numero);
+				console.log("renderTable fullsource:", row.fullSource);
+				console.log("renderTable numero:", row.numero);
+				console.log("renderTable dejaJouee:", dejaJouee);
+				console.log("---", "---");
 
 				// Appliquer la couleur de fond verte si déjà jouée
 				tr.className = dejaJouee 
