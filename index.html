@@ -216,7 +216,10 @@
 			const randomIndex = Math.floor(Math.random() * lignesDisponibles.length);
 			const row = lignesDisponibles[randomIndex];
 
-			// 6. Ajouter à l'historique et afficher
+			// 6. MARQUER IMMÉDIATEMENT COMME JOUÉE
+			marquerCommeJouee(row.FULL_SOURCE, row.DONNE);
+			
+			// 7. Ajouter à l'historique et afficher
 			historiqueTirages.unshift(row);
 			if (historiqueTirages.length > 3) {
 				historiqueTirages.pop();
