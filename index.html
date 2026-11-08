@@ -158,7 +158,7 @@
 				const tr = document.createElement('tr');
 				
 				// Clé unique identique à celle enregistrée au clic sur "Jouer"
-				const dejaJouee = jouees.some(item => item.fullSource === donne.fullSource && item.numeroDonne === donne.numero);
+				const dejaJouee = jouees.some(item => item.fullSource === row.fullSource && item.numeroDonne === row.numero);
 
 				// Appliquer la couleur de fond verte si déjà jouée
 				tr.className = dejaJouee 
