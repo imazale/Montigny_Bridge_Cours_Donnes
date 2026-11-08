@@ -36,13 +36,13 @@
 
 
 				<!-- 3. Boutons télécharger et Aléatoire placé sous la famille -->
-				<div>
+				<div class="flex items-center gap-2">
 
 					<a id="btn-download-excel" href="#" download class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
 						<span>📥</span> Télécharger le tableau Excel
 					</a>
 					
-					<button onclick="tirerDonneAleatoire()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex items-center gap-2">
+					<button onclick="tirerDonneAleatoire()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5"">
 						<span>🎲</span> Tirer une donne au hasard
 					</button>
 					
@@ -111,6 +111,7 @@
 				if (familles.length > 0) {
 					select.value = familles[0];
 					renderTable(familles[0]);
+					mettreAJourLienExcel();
 				}
 
 				// 4. Écouter les changements de sélection pour filtrer instantanément
