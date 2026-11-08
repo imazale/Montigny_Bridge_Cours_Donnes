@@ -356,6 +356,9 @@
 
 	// Fonction pour générer et télécharger un fichier CSV compatible Excel
 	function telechargerCSV() {
+	
+		const BASE_URL_GITHUB = "https://imazale.github.io/Montigny_Bridge_Cours_Donnes/data/";
+				
 		// 1. Récupérer la famille active (si un filtre est appliqué) ou exporter tout
 		const select = document.getElementById('famille-select');
 		const familleActive = select ? select.value.trim() : "";
@@ -380,18 +383,28 @@
 			// Adaptation des noms de colonnes de votre objet vers les en-têtes demandés
 			// (En supposant que row.FILE correspond au nom du fichier de commentaires)
 			const famille = row.FAMILLE || "";
-			const fichier = row.FILE || "";
+			const fichier = row.FULL_SOURCE || "";
 			const donne = row.DONNE || "";
-			const lienBridge = row.LINK || "";
+			const urlBridge = row.LINK || "";
+			const urlCommentaires = row.FILE ? `${BASE_URL_GITHUB}${row.FILE}` : "";
 			const lienCommentaires = row.FILE ? `data/${row.FILE}` : "";
 
+			// Formule Excel pour afficher "Jouer" avec un lien hypertexte
+			const lienBridgeExcel = urlBridge.trim() !== "" 
+				? `=HYPERLINK("${urlBridge.replace(/"/g, '""')}"; "Jouer")` 
+				: "";
+
+			const lienCommentairesExcel = urlCommentaires !== "" 
+            ? `=HYPERLINK("${urlCommentaires.replace(/"/g, '""')}"; "Commentaires")` 
+            : "";
+			
 			// Échapper les guillemets éventuels et entourer de guillemets pour sécuriser le CSV
 			const ligne = [
 				`"${famille.replace(/"/g, '""')}"`,
 				`"${fichier.replace(/"/g, '""')}"`,
 				`"${donne.replace(/"/g, '""')}"`,
-				`"${lienBridge.replace(/"/g, '""')}"`,
-				`"${lienCommentaires.replace(/"/g, '""')}"`
+				`"${lienBridgeExcel}"`,
+				`"${lienCommentairesExcel}"`				
 			];
 
 			csvContent += ligne.join(";") + "\r\n";
