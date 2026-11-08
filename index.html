@@ -6,6 +6,7 @@
     <title>Cours de Bridge - Répertoire des Donnes</title>
     <!-- Utilisation du design moderne Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+	<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen py-8 px-4">
     <div class="max-w-5xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden p-6 md:p-8">
@@ -354,12 +355,12 @@
 		renderTable(familleSelectionnee);
 	}	
 
-	// Fonction ultime pour télécharger un fichier Excel propre avec de vrais liens cliquables
+	// Fonction ultime pour télécharger un vrai .xlsx propre et fonctionnel
 	function telechargerExcel() {
 		const select = document.getElementById('famille-select');
 		const familleActive = select ? select.value.trim() : "";
 
-		// Pensez à remplacer par l'URL exacte de votre dépôt GitHub Pages
+		// Remplace par l'URL exacte de ton dépôt GitHub Pages
 		const BASE_URL_GITHUB = "https://imazale.github.io/Montigny_Bridge_Cours_Donnes/data/";
 
 		const donneesAExporter = familleActive 
@@ -371,95 +372,64 @@
 			return;
 		}
 
-		// Fonction utilitaire pour sécuriser les caractères spéciaux en HTML
-		const escapeHtml = (str) => {
-			if (!str) return "";
-			return String(str)
-				.replace(/&/g, "&amp;")
-				.replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;")
-				.replace(/"/g, "&quot;")
-				.replace(/'/g, "&#039;");
-		};
+		// 1. Création des en-têtes du tableau
+		const aoa = [
+			["FAMILLE", "FICHIER", "DONNE", "LIEN_BRIDGE_TRAINING", "LIEN_COMMENTAIRES"]
+		];
 
-		// Construction du contenu HTML structuré pour Excel
-		let html = `
-			<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-			<head>
-				<meta charset="utf-8">
-				<style>
-					table { border-collapse: collapse; width: 100%; }
-					th { background-color: #f2f2f2; border: 1px solid #d9d9d9; font-weight: bold; text-align: center; padding: 8px; }
-					td { border: 1px solid #d9d9d9; padding: 6px; vertical-align: middle; }
-				</style>
-			</head>
-			<body>
-				<table>
-					<thead>
-						<tr>
-							<th>FAMILLE</th>
-							<th>FICHIER</th>
-							<th>DONNE</th>
-							<th>LIEN_BRIDGE_TRAINING</th>
-							<th>LIEN_COMMENTAIRES</th>
-						</tr>
-					</thead>
-					<tbody>
-		`;
+		const liensHypertextes = [];
 
-		// Remplissage des lignes
-		donneesAExporter.forEach(row => {
-			const famille = escapeHtml(row.FAMILLE || "");
-			const fichier = escapeHtml(row.FULL_SOURCE || ""); 
-			const donne = escapeHtml(row.DONNE || "");
+		// 2. Remplissage des lignes de données
+		donneesAExporter.forEach((row, index) => {
+			const famille = row.FAMILLE || "";
+			const fichier = row.FULL_SOURCE || ""; 
+			const donne = row.DONNE || "";
 			const urlBridge = row.LINK ? row.LINK.trim() : "";
 			const urlCommentaires = row.FILE ? `${BASE_URL_GITHUB}${row.FILE}` : "";
 
-			html += "<tr>";
-			html += `<td>${famille}</td>`;
-			html += `<td>${fichier}</td>`;
-			html += `<td>${donne}</td>`;
-			
-			// Colonne LIEN_BRIDGE_TRAINING
+			// On met le texte simple dans le tableau de base
+			aoa.push([
+				famille,
+				fichier,
+				donne,
+				urlBridge !== "" ? "Jouer" : "",
+				urlCommentaires !== "" ? "Commentaires" : ""
+			]);
+
+			// On mémorise les coordonnées des cellules qui doivent devenir des liens cliquables
+			// (Ligne index + 1 car la ligne 0 est l'en-tête)
+			const rowIndex = index + 1;
 			if (urlBridge) {
-				html += `<td><a href="${escapeHtml(urlBridge)}">Jouer</a></td>`;
-			} else {
-				html += `<td></td>`;
+				liensHypertextes.push({ r: rowIndex, c: 3, url: urlBridge });
 			}
-
-			// Colonne LIEN_COMMENTAIRES
 			if (urlCommentaires) {
-				html += `<td><a href="${escapeHtml(urlCommentaires)}">Commentaires</a></td>`;
-			} else {
-				html += `<td></td>`;
+				liensHypertextes.push({ r: rowIndex, c: 4, url: urlCommentaires });
 			}
-
-			html += "</tr>";
 		});
 
-		html += `
-					</tbody>
-				</table>
-			</body>
-			</html>
-		`;
+		// 3. Génération de la feuille de calcul via SheetJS
+		const worksheet = XLSX.utils.aoa_to_sheet(aoa);
 
-		// Création du fichier avec l'extension .xls (reconnu directement par Excel)
-		const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement("a");
-		
+		// 4. Injection propre des métadonnées de liens hypertextes natifs
+		liensHypertextes.forEach(item => {
+			const cellRef = XLSX.utils.encode_cell({ r: item.r, c: item.c });
+			if (worksheet[cellRef]) {
+				// Propriété officielle SheetJS pour les liens natifs Excel
+				worksheet[cellRef].l = { Target: item.url, Tooltip: "Cliquer pour ouvrir" };
+			}
+		});
+
+		// 5. Création du classeur et téléchargement direct du .xlsx
+		const workbook = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Donnes Bridge");
+
 		const dateStr = new Date().toISOString().slice(0, 10);
 		const filename = familleActive 
-			? `donnes_bridge_${familleActive}_${dateStr}.xls` 
-			: `toutes_les_donnes_bridge_${dateStr}.xls`;
+			? `donnes_bridge_${familleActive}_${dateStr}.xlsx` 
+			: `toutes_les_donnes_bridge_${dateStr}.xlsx`;
 
-		link.setAttribute("href", url);
-		link.setAttribute("download", filename);
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-	}	
+		XLSX.writeFile(workbook, filename);
+	}
     </script>
 </body>
 </html>
