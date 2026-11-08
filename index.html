@@ -6,7 +6,6 @@
     <title>Cours de Bridge - Répertoire des Donnes</title>
     <!-- Utilisation du design moderne Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-	<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen py-8 px-4">
     <div class="max-w-5xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden p-6 md:p-8">
@@ -39,9 +38,9 @@
 				<!-- 3. Boutons télécharger et Aléatoire placé sous la famille -->
 				<div>
 
-					<button onclick="telechargerExcel()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition flex items-center gap-1.5">
-						<span>📥</span> Télécharger le tableau (Excel)
-					</button>
+					<a id="btn-download-excel" href="#" download class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
+						<span>📥</span> Télécharger le tableau Excel
+					</a>
 					
 					<button onclick="tirerDonneAleatoire()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex items-center gap-2">
 						<span>🎲</span> Tirer une donne au hasard
@@ -355,82 +354,41 @@
 		renderTable(familleSelectionnee);
 	}	
 
-	// Fonction définitive pour générer un vrai fichier .xlsx avec des liens cliquables
-	function telechargerExcel() {
-		const select = document.getElementById('famille-select');
-		const familleActive = select ? select.value.trim() : "";
 
-		// Pensez à remplacer par l'URL exacte de votre dépôt GitHub Pages
-		const BASE_URL_GITHUB = "https://imazale.github.io/Montigny_Bridge_Cours_Donnes/data/";
-
-		const donneesAExporter = familleActive 
-			? allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleActive)
-			: allData;
-
-		if (donneesAExporter.length === 0) {
-			alert("Aucune donnée à exporter.");
-			return;
-		}
-
-		// 1. En-têtes du tableau
-		const aoa = [
-			["FAMILLE", "FICHIER", "DONNE", "LIEN_BRIDGE_TRAINING", "LIEN_COMMENTAIRES"]
-		];
-
-		const formulasMeta = [];
-
-		// 2. Remplissage des données (cellules de liens vides au départ dans le tableau brut)
-		donneesAExporter.forEach((row, index) => {
-			const famille = row.FAMILLE || "";
-			const fichier = row.FULL_SOURCE || ""; 
-			const donne = row.DONNE || "";
-			const urlBridge = row.LINK ? row.LINK.trim() : "";
-			const urlCommentaires = row.FILE ? `${BASE_URL_GITHUB}${row.FILE}` : "";
-
-			aoa.push([famille, fichier, donne, "", ""]);
-
-			const rowIndex = index + 1; // Ligne 0 = en-tête
-			
-			// IMPORTANT : Utilisation obligatoire de "HYPERLINK" en anglais pour SheetJS
-			formulasMeta.push({
-				rowIndex,
-				bridge: urlBridge !== "" ? `HYPERLINK("${urlBridge}", "Jouer")` : "",
-				commentaires: urlCommentaires !== "" ? `HYPERLINK("${urlCommentaires}", "Commentaires")` : ""
-			});
-		});
-
-		// 3. Création de la feuille Excel
-		const worksheet = XLSX.utils.aoa_to_sheet(aoa);
-
-		// 4. Injection des formules de liens cliquables natifs
-		formulasMeta.forEach(item => {
-			if (item.bridge) {
-				const cellRef = XLSX.utils.encode_cell({ r: item.rowIndex, c: 3 });
-				if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
-				worksheet[cellRef].f = item.bridge;
-				delete worksheet[cellRef].v;
-			}
-
-			if (item.commentaires) {
-				const cellRef = XLSX.utils.encode_cell({ r: item.rowIndex, c: 4 });
-				if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
-				worksheet[cellRef].f = item.commentaires;
-				delete worksheet[cellRef].v;
-			}
-		});
-
-		// 5. Génération et téléchargement du fichier .xlsx
-		const workbook = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(workbook, worksheet, "Donnes Bridge");
-
-		const dateStr = new Date().toISOString().slice(0, 10);
-		const filename = familleActive 
-			? `donnes_bridge_${familleActive}_${dateStr}.xlsx` 
-			: `toutes_les_donnes_bridge_${dateStr}.xlsx`;
-
-		XLSX.writeFile(workbook, filename);
+	// Fonction pour nettoyer le nom de la famille de la même manière qu'en Python
+	function nettoyerNomFamille(famille) {
+		if (!famille) return "toutes_les_donnes"; // ou un nom par défaut global si besoin
+		return famille.replace(/[^a-zA-Z0-9 _-]/g, "_").trim();
 	}
 
+	function mettreAJourLienExcel() {
+		const select = document.getElementById('famille-select');
+		const btnDownload = document.getElementById('btn-download-excel');
+		
+		if (!select || !btnDownload) return;
+
+		const familleActive = select.value.trim();
+		
+		if (familleActive) {
+			const familleClean = nettoyerNomFamille(familleActive);
+			// Chemin vers le fichier spécifique de la famille généré par Python
+			btnDownload.href = `data/donnes_bridge_${familleClean}.xlsx`;
+			btnDownload.download = `donnes_bridge_${familleClean}.xlsx`;
+			btnDownload.style.display = "inline-flex"; // Afficher le bouton
+		} else {
+			// Si aucune famille n'est sélectionnée (ou option "Toutes"), 
+			// tu peux pointer vers un fichier global si tu en génères un, ou masquer le bouton
+			btnDownload.href = `data/donnes_bridge.xlsx`;
+			btnDownload.download = `donnes_bridge.xlsx`;
+		}
+	}
+
+	// Écouter le changement de sélection dans le menu déroulant
+	document.getElementById('famille-select')?.addEventListener('change', mettreAJourLienExcel);
+
+	// Appeler la fonction au chargement de la page pour initialiser le lien
+	document.addEventListener('DOMContentLoaded', mettreAJourLienExcel);
+	
     </script>
 </body>
 </html>
