@@ -144,7 +144,7 @@
 
 				// Appliquer la couleur de fond verte si déjà jouée
 				tr.className = dejaJouee 
-					? "border-b bg-emerald-50/60 hover:bg-emerald-50 transition" 
+					? "border-b bg-slate-200/70 hover:bg-slate-200 transition" 
 					: "border-b hover:bg-slate-50 transition";
 				
 				// Bouton Actions (LINK) avec appel de marquerCommeJouee et rechargement visuel
@@ -168,40 +168,54 @@
 		
         // Fonction pour tirer une donne au hasard parmi toutes les données chargées
 		function tirerDonneAleatoire() {
-			if (allData.length === 0) return;
+			// 1. Récupérer la famille active et nettoyer les espaces
+			const select = document.getElementById('famille-select');
+			const familleActive = select ? select.value.trim() : "";
 
-			// Choisir un index aléatoire
-			const randomIndex = Math.floor(Math.random() * allData.length);
-			const row = allData[randomIndex];
+			if (!familleActive) {
+				alert("Veuillez d'abord sélectionner une famille dans le menu déroulant.");
+				return;
+			}
 
-			const resultDiv = document.getElementById('random-result');
-			resultDiv.classList.remove('hidden');
+			// 2. Récupérer la liste des donnes déjà jouées depuis le localStorage
+			const jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
 
-			// Générer les boutons d'action
-			const lienHtml = row.LINK && row.LINK.trim() !== ""
-				? `<a href="${row.LINK}" target="_blank" onclick="marquerCommeJouee('${row.FULL_SOURCE.replace(/'/g, "\\'")}', '${row.DONNE}')" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition shadow-sm">Jouer ↗</a>` 
-				: '<span class="text-xs text-slate-400">Pas de lien</span>';
+			// 3. Filtrer pour ne garder QUE les donnes de la famille qui n'ont PAS ENCORE été jouées
+			const lignesDisponibles = allData.filter(row => {
+				if (!row.FAMILLE) return false;
+				if (row.FAMILLE.trim() !== familleActive) return false;
+
+				// Créer la clé unique de la donne
+				const cleDonne = `${row.FULL_SOURCE}_${row.DONNE}`;
 				
-			const pdfHtml = row.FILE && row.FILE.trim() !== ""
-				? `<a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>`
-				: '';
+				// On exclut si elle est déjà dans les jouées
+				return !jouees.includes(cleDonne);
+			});
 
-			// Injecter la carte de résultat
-			resultDiv.innerHTML = `
-				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-					<div>
-						<div class="flex items-center gap-2 mb-1">
-							<span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-semibold rounded">${row.FAMILLE || 'Famille'}</span>
-							<span class="text-xs font-bold text-slate-700">Donne n° ${row.DONNE}</span>
-						</div>
-						<p class="font-mono text-xs text-slate-500 break-all" title="${row.FULL_SOURCE}">${row.FULL_SOURCE}</p>
+			// 4. Si toutes les donnes de cette famille ont déjà été jouées !
+			if (lignesDisponibles.length === 0) {
+				const resultDiv = document.getElementById('random-result');
+				resultDiv.classList.remove('hidden');
+				resultDiv.innerHTML = `
+					<div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center justify-between">
+						<span>🎉 Bravo ! Vous avez déjà joué toutes les donnes de cette famille.</span>
+						<button onclick="reinitialiserProgression()" class="underline font-semibold hover:text-amber-900">Réinitialiser</button>
 					</div>
-					<div class="flex items-center gap-2 self-end md:self-center shrink-0">
-						${lienHtml}
-						${pdfHtml}
-					</div>
-				</div>
-			`;
+				`;
+				return;
+			}
+
+			// 5. Choisir un index aléatoire parmi les donnes restantes non jouées
+			const randomIndex = Math.floor(Math.random() * lignesDisponibles.length);
+			const row = lignesDisponibles[randomIndex];
+
+			// 6. Ajouter à l'historique et afficher
+			historiqueTirages.unshift(row);
+			if (historiqueTirages.length > 3) {
+				historiqueTirages.pop();
+			}
+
+			afficherResultatEtHistorique();
 		}
 
 	// Fonction pour enregistrer une donne comme jouée
