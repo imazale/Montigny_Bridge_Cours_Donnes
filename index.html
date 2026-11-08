@@ -373,10 +373,10 @@
 			return;
 		}
 
-		// 2. Définir les en-têtes demandés
-		let csvContent = "\uFEFF"; // BOM UTF-8 pour Excel
+		// BOM UTF-8 + "sep=µ" pour forcer Excel à découper les colonnes sur le caractère "µ"
+		let csvContent = "\uFEFFsep=µ\r\n"; 
 		const enTetes = ["FAMILLE", "FICHIER", "DONNE", "LIEN_BRIDGE_TRAINING", "LIEN_COMMENTAIRES"];
-		csvContent += enTetes.join(";") + "\r\n";
+		csvContent += enTetes.join("µ") + "\r\n"; // Séparateur µ
 
 		// 3. Remplir les lignes
 		donneesAExporter.forEach(row => {
@@ -407,7 +407,7 @@
 				`"${lienCommentairesExcel}"`				
 			];
 
-			csvContent += ligne.join(";") + "\r\n";
+			csvContent += ligne.join("µ") + "\r\n";
 		});
 
 		// 4. Créer un objet Blob et déclencher le téléchargement automatique
