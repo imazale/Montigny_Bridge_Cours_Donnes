@@ -176,31 +176,28 @@
 		}
 
 	function tirerDonneAuHasard() {
-		// Récupérer les lignes actuellement affichées (selon la famille sélectionnée)
-		const lignesvisibles = document.querySelectorAll("#ton-tableau-corps tr"); // Remplace par ton sélecteur de lignes
-		
-		if (lignesvisibles.length === 0) {
+
+		// Cible uniquement les lignes du corps du tableau (adaptez l'ID si nécessaire)
+		const lignesVisibles = document.querySelectorAll("#table-body tr");
+
+		if (lignesVisibles.length === 0) {
 			alert("Aucune donne disponible pour cette sélection !");
 			return;
 		}
 
-		// Choisir un index au hasard
-		const indexAleatoire = Math.floor(Math.random() * lignesvisibles.length);
-		const ligneCible = lignesvisibles[indexAleatoire];
+		const indexAleatoire = Math.floor(Math.random() * lignesVisibles.length);
+		const ligneCible = lignesVisibles[indexAleatoire];
 
-		// 1. Faire défiler la page/le tableau jusqu'à cette ligne
 		ligneCible.scrollIntoView({
 			behavior: "smooth",
-			block: "start" // Place la ligne tout en haut de la zone visible
+			block: "start"
 		});
 
-		// 2. Petit effet visuel temporaire pour la mettre en valeur (flash subtil)
 		ligneCible.classList.add("bg-emerald-100", "transition-colors", "duration-500");
-		
 		setTimeout(() => {
 			ligneCible.classList.remove("bg-emerald-100");
-		}, 2000); // Retire l'effet après 2 secondes
-	}		
+		}, 2000);
+	}
 
 	// Fonction pour enregistrer une donne comme jouée
 	function marquerCommeJouee(fullSource, numeroDonne) {
@@ -217,69 +214,6 @@
 			localStorage.setItem('bridge_donnes_jouees', JSON.stringify(jouees));
 		}
 	}	
-
-	// Fonction pour afficher le tirage en cours et l'historique récent
-	function afficherResultatEtHistorique() {
-		const resultDiv = document.getElementById('random-result');
-		resultDiv.classList.remove('hidden');
-
-		if (historiqueTirages.length === 0) return;
-
-		// Le tirage actif est le premier du tableau (index 0)
-		const current = historiqueTirages[0];
-
-		const currentLien = current.LINK && current.LINK.trim() !== ""
-			? `<a href="${current.LINK}" target="_blank" onclick="marquerCommeJouee('${current.FULL_SOURCE.replace(/'/g, "\\'")}', '${current.DONNE}')" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition shadow-sm">Jouer ↗</a>` 
-			: '<span class="text-xs text-slate-400">Pas de lien</span>';
-
-		const currentPdf = current.FILE && current.FILE.trim() !== ""
-			? `<a href="data/${current.FILE}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>`
-			: '';
-
-		// Construction du HTML pour le tirage courant
-		let html = `
-			<div>
-				<div class="flex items-center justify-between mb-1.5">
-					<span class="px-2 py-0.5 bg-indigo-200 text-indigo-900 text-xs font-bold rounded">Tirage en cours</span>
-					<span class="text-xs font-bold text-slate-700">Donne n° ${current.DONNE}</span>
-				</div>
-				<div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-lg border border-indigo-100 shadow-sm">
-					<p class="font-mono text-xs text-slate-500 break-all" title="${current.FULL_SOURCE}">${current.FULL_SOURCE}</p>
-					<div class="flex items-center gap-2 shrink-0">
-						${currentLien}
-						${currentPdf}
-					</div>
-				</div>
-			</div>
-		`;
-
-		// S'il y a des éléments précédents dans l'historique (index 1 et 2)
-		if (historiqueTirages.length > 1) {
-			html += `
-				<div class="pt-3 border-t border-indigo-200 mt-3">
-					<h4 class="text-xs font-semibold text-indigo-800 mb-2">Historique récent :</h4>
-					<div class="space-y-1.5">
-			`;
-
-			for (let i = 1; i < historiqueTirages.length; i++) {
-				const past = historiqueTirages[i];
-				const pastLien = past.LINK && past.LINK.trim() !== "" ? `<a href="${past.LINK}" target="_blank" onclick="marquerCommeJouee('${past.FULL_SOURCE.replace(/'/g, "\\'")}', '${past.DONNE}')" class="text-blue-600 hover:underline">Jouer ↗</a>` : '';
-				const pastPdf = past.FILE && past.FILE.trim() !== "" ? `<a href="data/${past.FILE}" target="_blank" class="text-slate-600 hover:underline">PDF ↗</a>` : '';
-				
-				html += `
-					<div class="flex items-center justify-between text-xs bg-white/70 px-3 py-1.5 rounded border border-indigo-100">
-						<span class="font-medium text-slate-700">Donne ${past.DONNE}</span>
-						<span class="font-mono text-slate-400 truncate max-w-xs mx-2" title="${past.FULL_SOURCE}">${past.FULL_SOURCE}</span>
-						<div class="space-x-3 shrink-0">${pastLien} ${pastPdf}</div>
-					</div>
-				`;
-			}
-
-			html += `</div></div>`;
-		}
-
-		resultDiv.innerHTML = html;
-	}
 
 	// Fonction pour basculer l'état d'une donne (jouée <-> non jouée)
 	function basculerEtatDonne(fullSource, numeroDonne) {
