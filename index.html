@@ -80,7 +80,6 @@
 		// Variables globales
 		//------------------------------------------------------------------------------------
 		let allData = []; // Variable globale pour stocker toutes les données du CSV
-		let historiqueTirages = [];
 		
 		//------------------------------------------------------------------------------------
 		// Papa.parse : appelé au chargement de la page
@@ -139,13 +138,6 @@
 			const tbody = document.getElementById('table-body');
 			tbody.innerHTML = ""; // Vider le tableau
 			
-			// Masquer et vider le résultat aléatoire lors d'un changement de famille
-			const resultDiv = document.getElementById('random-result');
-			if (resultDiv) {
-				resultDiv.classList.add('hidden');
-				resultDiv.innerHTML = "";
-			}
-
 			const storageKey = `bridge_donnes_jouees_${familleSelectionnee}`;
 			let jouees = JSON.parse(localStorage.getItem(storageKey)) || [];
 
@@ -226,9 +218,9 @@
 			console.log("marquerCommeJouee fullSource :", fullSource);
 			console.log("marquerCommeJouee numeroDonne :", numeroDonne);
 		
-			// clé de storage : bridge_donnes_jouees_<familleActive>
-			const familleActive = typeof familleActuelle !== 'undefined' ? familleActuelle : "defaut";
-			const storageKey = `bridge_donnes_jouees_${familleActive}`;
+			// clé de storage : bridge_donnes_jouees_<famille>
+			const famille = document.getElementById('famille-select').value;
+			const storageKey = `bridge_donnes_jouees_${famille}`;
 
 			// Récupérer la liste existante depuis le localStorage
 			let jouees = JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -246,11 +238,8 @@
 				localStorage.setItem(storageKey, JSON.stringify(jouees));
 			}		
 
-			// Rafraîchir le tableau pour mettre à jour instantanément les couleurs et les boutons
-			const select = document.getElementById('famille-select');
-			if (select && select.value) {
-				renderTable(select.value);
-			}
+			// Réafficher la famille
+			renderTable(famille);
 
 		}
 
@@ -262,9 +251,9 @@
 			console.log("supprimerCommeJouee fullSource :", fullSource);
 			console.log("supprimerCommeJouee numeroDonne :", numeroDonne);
 		
-			// clé de storage : bridge_donnes_jouees_<familleActive>
-			const familleActive = typeof familleActuelle !== 'undefined' ? familleActuelle : "defaut";
-			const storageKey = `bridge_donnes_jouees_${familleActive}`;
+			// clé de storage : bridge_donnes_jouees_<famille>
+			const famille = document.getElementById('famille-select').value;
+			const storageKey = `bridge_donnes_jouees_${famille}`;
 
 			// Récupérer la liste existante depuis le localStorage
 			let jouees = JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -277,11 +266,8 @@
 			// Mettre à jour le localStorage avec la nouvelle liste
 			localStorage.setItem(storageKey, JSON.stringify(joueesFiltrees));
 
-			// Rafraîchir le tableau pour mettre à jour instantanément les couleurs et les boutons
-			const select = document.getElementById('famille-select');
-			if (select && select.value) {
-				renderTable(select.value);
-			}
+			// Réafficher la famille
+			renderTable(famille);
 
 		}
 		
@@ -291,14 +277,6 @@
 		function onFamilleChange(famille) {
 			// Nettoyer les espaces superflus de la famille sélectionnée
 			const familleSelectionnee = famille ? famille.trim() : "";
-
-			// 1. Réinitialiser l'historique des tirages aléatoires et masquer le bloc
-			historiqueTirages = [];
-			const resultDiv = document.getElementById('random-result');
-			if (resultDiv) {
-				resultDiv.classList.add('hidden');
-				resultDiv.innerHTML = "";
-			}
 
 			// 2. Mettre à jour le tableau principal avec la nouvelle famille
 			renderTable(familleSelectionnee);
@@ -360,8 +338,8 @@
 			}
 		}
 
-// Branchement sur ton nouveau bouton de réinitialisation
-document.getElementById("btn-reset-famille")?.addEventListener("click", reinitialiserFamilleActive);
+	// Branchement sur ton nouveau bouton de réinitialisation
+	document.getElementById("btn-reset-famille")?.addEventListener("click", reinitialiserFamilleActive);
 
 	// Écouter le changement de sélection dans le menu déroulant
 	document.getElementById('famille-select')?.addEventListener('change', mettreAJourLienExcel);
