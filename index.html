@@ -18,8 +18,9 @@
 
 			<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6 space-y-4">
 				
-				<!-- 1. Sélection de la famille et 2. Compteur de donnes -->
 				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+				
+					<!-- id="famille-select" selecteur de famille -->
 					<div class="w-full sm:w-2/3">
 						<label for="famille-select" class="block text-sm font-medium text-slate-700 mb-1">Sélectionner une famille :</label>
 						<select id="famille-select" onchange="onFamilleChange(this.value)" class="w-full p-2.5 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
@@ -27,7 +28,7 @@
 						</select>
 					</div>
 					
-					<!-- Le compteur -->
+					<!-- id="total-donnes" : compteur de donnes dans la famille-->
 					<div class="flex items-center gap-2 sm:self-end">
 						<span class="text-sm text-slate-600">Donnes disponibles :</span>
 						<span id="total-donnes" class="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-md font-bold text-sm">0</span>
@@ -35,13 +36,14 @@
 				</div>
 
 
-				<!-- 3. Boutons télécharger et Aléatoire placé sous la famille -->
 				<div class="flex items-center gap-2">
 
+					<!-- id="btn-download-excel" Bouton de téléchargement -->
 					<a id="btn-download-excel" href="#" download class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
 						<span>📥</span> Télécharger le tableau Excel
 					</a>
 					
+					<!-- id="btn-hasard" Positionnement sur une donne au hasard -->
 					<button id="btn-hasard" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
 						<span>🎲</span> Donne au hasard
 					</button>					
@@ -57,6 +59,7 @@
                         <th class="py-3 px-4 font-semibold text-center">Commentaires</th>
                     </tr>
                 </thead>
+				<!-- id="table-body" Table des donnes -->
                 <tbody id="table-body" class="divide-y divide-slate-200 text-sm">
                     <!-- Les lignes seront chargées dynamiquement depuis le CSV -->
                 </tbody>
@@ -67,9 +70,16 @@
     <!-- Script pour lire automatiquement le fichier CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
+	
+		//------------------------------------------------------------------------------------
+		// Variables globales
+		//------------------------------------------------------------------------------------
 		let allData = []; // Variable globale pour stocker toutes les données du CSV
 		let historiqueTirages = [];
 		
+		//------------------------------------------------------------------------------------
+		// Papa.parse : appelé au chargement de la page
+		//------------------------------------------------------------------------------------
 		Papa.parse("data/recapitulatif_donnes.csv", {
 			download: true,
 			header: true,
@@ -116,7 +126,10 @@
 			}
 		});
 
-		// Fonction pour filtrer et afficher le tableau selon la famille choisie
+		//------------------------------------------------------------------------------------
+		// renderTable : En fonction de la famille selectionnée
+		// remplit le tableau des donnes (table-body) et le nb de donnes (total-donnes)
+		//------------------------------------------------------------------------------------
 		function renderTable(familleSelectionnee) {
 			const tbody = document.getElementById('table-body');
 			tbody.innerHTML = ""; // Vider le tableau
@@ -175,115 +188,125 @@
 			});
 		}
 
-	function tirerDonneAuHasard() {
+		//------------------------------------------------------------------------------------
+		// tirerDonneAuHasard : Se positionne sur une donne du tableau en cours de façon aléatoire
+		//------------------------------------------------------------------------------------
+		function tirerDonneAuHasard() {
 
-		// Cible uniquement les lignes du corps du tableau (adaptez l'ID si nécessaire)
-		const lignesVisibles = document.querySelectorAll("#table-body tr");
+			// récupérer table_body
+			const lignesVisibles = document.querySelectorAll("#table-body tr");
+			if (lignesVisibles.length === 0) {
+				alert("Aucune donne disponible pour cette sélection !");
+				return;
+			}
 
-		if (lignesVisibles.length === 0) {
-			alert("Aucune donne disponible pour cette sélection !");
-			return;
-		}
+			// tirer un index aléatoire
+			const indexAleatoire = Math.floor(Math.random() * lignesVisibles.length);
+			const ligneCible = lignesVisibles[indexAleatoire];
 
-		const indexAleatoire = Math.floor(Math.random() * lignesVisibles.length);
-		const ligneCible = lignesVisibles[indexAleatoire];
-
-		ligneCible.scrollIntoView({
-			behavior: "smooth",
-			block: "start"
-		});
-
-		ligneCible.classList.add("bg-emerald-100", "transition-colors", "duration-500");
-		setTimeout(() => {
-			ligneCible.classList.remove("bg-emerald-100");
-		}, 2000);
-	}
-
-	// Fonction pour enregistrer une donne comme jouée
-	function marquerCommeJouee(fullSource, numeroDonne) {
+			// scroller table-body jusqu'à cet index aléatoire
+			ligneCible.scrollIntoView({
+				behavior: "smooth",
+				block: "start"
+			});
 	
-		// Clé unique pour identifier la donne (ex: chemin + numéro)
-		const cleDonne = `${fullSource}_${numeroDonne}`;
+		}
+
+		//------------------------------------------------------------------------------------
+		// marquerCommeJouee : Enregistrer qu'une donne a été jouée dans le localstorage
+		//------------------------------------------------------------------------------------
+		function marquerCommeJouee(fullSource, numeroDonne) {
 		
-		// Récupérer la liste existante depuis le localStorage
-		let jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
-		
-		// Si elle n'y est pas déjà, on l'ajoute
-		if (!jouees.includes(cleDonne)) {
-			jouees.push(cleDonne);
+			// Clé unique pour identifier la donne (ex: chemin + numéro)
+			const cleDonne = `${fullSource}_${numeroDonne}`;
+			
+			// Récupérer la liste existante depuis le localStorage
+			let jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
+			
+			// Si elle n'y est pas déjà, on l'ajoute
+			if (!jouees.includes(cleDonne)) {
+				jouees.push(cleDonne);
+				localStorage.setItem('bridge_donnes_jouees', JSON.stringify(jouees));
+			}
+		}	
+
+		//------------------------------------------------------------------------------------
+		// basculerEtatDonne : basculer l'état d'une donne jouée d'une donne
+		//------------------------------------------------------------------------------------
+		function basculerEtatDonne(fullSource, numeroDonne) {
+			const cleDonne = `${fullSource}_${numeroDonne}`;
+			let jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
+			
+			const index = jouees.indexOf(cleDonne);
+			if (index > -1) {
+				// Si elle était jouée, on la retire (on la remet en "non jouée")
+				jouees.splice(index, 1);
+			} else {
+				// Sinon, on l'ajoute
+				jouees.push(cleDonne);
+			}
+			
+			// Sauvegarder dans le localStorage
 			localStorage.setItem('bridge_donnes_jouees', JSON.stringify(jouees));
-		}
-	}	
-
-	// Fonction pour basculer l'état d'une donne (jouée <-> non jouée)
-	function basculerEtatDonne(fullSource, numeroDonne) {
-		const cleDonne = `${fullSource}_${numeroDonne}`;
-		let jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
-		
-		const index = jouees.indexOf(cleDonne);
-		if (index > -1) {
-			// Si elle était jouée, on la retire (on la remet en "non jouée")
-			jouees.splice(index, 1);
-		} else {
-			// Sinon, on l'ajoute
-			jouees.push(cleDonne);
-		}
-		
-		// Sauvegarder dans le localStorage
-		localStorage.setItem('bridge_donnes_jouees', JSON.stringify(jouees));
-		
-		// Rafraîchir le tableau pour mettre à jour instantanément les couleurs et les boutons
-		const select = document.getElementById('famille-select');
-		if (select && select.value) {
-			renderTable(select.value);
-		}
-	}
-
-	// Fonction déclenchée lors du changement de famille dans le menu déroulant
-	function onFamilleChange(famille) {
-		// Nettoyer les espaces superflus de la famille sélectionnée
-		const familleSelectionnee = famille ? famille.trim() : "";
-
-		// 1. Réinitialiser l'historique des tirages aléatoires et masquer le bloc
-		historiqueTirages = [];
-		const resultDiv = document.getElementById('random-result');
-		if (resultDiv) {
-			resultDiv.classList.add('hidden');
-			resultDiv.innerHTML = "";
+			
+			// Rafraîchir le tableau pour mettre à jour instantanément les couleurs et les boutons
+			const select = document.getElementById('famille-select');
+			if (select && select.value) {
+				renderTable(select.value);
+			}
 		}
 
-		// 2. Mettre à jour le tableau principal avec la nouvelle famille
-		renderTable(familleSelectionnee);
-	}	
+		//------------------------------------------------------------------------------------
+		// onFamilleChange : Fonction déclenchée lors du changement de famille dans le menu déroulant
+		//------------------------------------------------------------------------------------
+		function onFamilleChange(famille) {
+			// Nettoyer les espaces superflus de la famille sélectionnée
+			const familleSelectionnee = famille ? famille.trim() : "";
 
+			// 1. Réinitialiser l'historique des tirages aléatoires et masquer le bloc
+			historiqueTirages = [];
+			const resultDiv = document.getElementById('random-result');
+			if (resultDiv) {
+				resultDiv.classList.add('hidden');
+				resultDiv.innerHTML = "";
+			}
 
-	// Fonction pour nettoyer le nom de la famille de la même manière qu'en Python
-	function nettoyerNomFamille(famille) {
-		if (!famille) return "toutes_les_donnes"; // ou un nom par défaut global si besoin
-		return famille.replace(/[^\w\sÀ-ÿ-]/g, "_").trim();
-	}
+			// 2. Mettre à jour le tableau principal avec la nouvelle famille
+			renderTable(familleSelectionnee);
+		}	
 
-	function mettreAJourLienExcel() {
-		const select = document.getElementById('famille-select');
-		const btnDownload = document.getElementById('btn-download-excel');
-		
-		if (!select || !btnDownload) return;
-
-		const familleActive = select.value.trim();
-		
-		if (familleActive) {
-			const familleClean = nettoyerNomFamille(familleActive);
-			// Chemin vers le fichier spécifique de la famille généré par Python
-			btnDownload.href = `data/donnes_bridge_${familleClean}.xlsx`;
-			btnDownload.download = `donnes_bridge_${familleClean}.xlsx`;
-			btnDownload.style.display = "inline-flex"; // Afficher le bouton
-		} else {
-			// Si aucune famille n'est sélectionnée (ou option "Toutes"), 
-			// tu peux pointer vers un fichier global si tu en génères un, ou masquer le bouton
-			btnDownload.href = `data/donnes_bridge.xlsx`;
-			btnDownload.download = `donnes_bridge.xlsx`;
+		//------------------------------------------------------------------------------------
+		// nettoyerNomFamille : Fonction pour nettoyer le nom de la famille de la même manière qu'en Python
+		//------------------------------------------------------------------------------------
+		function nettoyerNomFamille(famille) {
+			if (!famille) return "toutes_les_donnes"; // ou un nom par défaut global si besoin
+			return famille.replace(/[^\w\sÀ-ÿ-]/g, "_").trim();
 		}
-	}
+
+		//------------------------------------------------------------------------------------
+		// mettreAJourLienExcel : construit le lien pour telechargement du fichier excel
+		//------------------------------------------------------------------------------------
+		function mettreAJourLienExcel() {
+			const select = document.getElementById('famille-select');
+			const btnDownload = document.getElementById('btn-download-excel');
+			
+			if (!select || !btnDownload) return;
+
+			const familleActive = select.value.trim();
+			
+			if (familleActive) {
+				const familleClean = nettoyerNomFamille(familleActive);
+				// Chemin vers le fichier spécifique de la famille généré par Python
+				btnDownload.href = `data/donnes_bridge_${familleClean}.xlsx`;
+				btnDownload.download = `donnes_bridge_${familleClean}.xlsx`;
+				btnDownload.style.display = "inline-flex"; // Afficher le bouton
+			} else {
+				// Si aucune famille n'est sélectionnée (ou option "Toutes"), 
+				// tu peux pointer vers un fichier global si tu en génères un, ou masquer le bouton
+				btnDownload.href = `data/donnes_bridge.xlsx`;
+				btnDownload.download = `donnes_bridge.xlsx`;
+			}
+		}
 
 	// Écouter le changement de sélection dans le menu déroulant
 	document.getElementById('famille-select')?.addEventListener('change', mettreAJourLienExcel);
