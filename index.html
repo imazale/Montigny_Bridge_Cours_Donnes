@@ -36,7 +36,7 @@
 				</div>
 
 
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-4 my-4">
 
 					<!-- id="btn-download-excel" Bouton de téléchargement -->
 					<a id="btn-download-excel" href="#" download class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
@@ -46,6 +46,11 @@
 					<!-- id="btn-hasard" Positionnement sur une donne au hasard -->
 					<button id="btn-hasard" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
 						<span>🎲</span> Donne au hasard
+					</button>	
+
+					<!-- id="btn-reset-famille" : Réinitialiser les donnes jouées pour cette famille -->
+					<button id="btn-reset-famille" class="bg-rose-600 hover:bg-rose-700 text-white font-medium px-4 py-2 rounded-lg transition-colors">
+						Réinitialiser les donnes jouées pour cette famille
 					</button>					
 				</div>
 				
@@ -170,7 +175,7 @@
 
 				// Petit bouton d'annulation discret qui apparaît uniquement si la donne a été jouée
 				const annulerHtml = dejaJouee
-					? `<button onclick="basculerEtatDonne('${row.FULL_SOURCE.replace(/'/g, "\\'")}', '${row.DONNE}')" class="ml-2 px-2 py-1 bg-slate-300 hover:bg-slate-400 text-slate-700 text-xs font-medium rounded transition" title="Considérer comme non jouée">Remettre non jouée</button>`
+					? `<button onclick="supprimerMarqueCommeJouee('${row.FULL_SOURCE.replace(/'/g, "\\'")}', '${row.DONNE}')" class="ml-2 px-2 py-1 bg-slate-300 hover:bg-slate-400 text-slate-700 text-xs font-medium rounded transition" title="Considérer comme non jouée">Remettre non jouée</button>`
 					: '';
 
 				tr.innerHTML = `
@@ -217,45 +222,62 @@
 		//------------------------------------------------------------------------------------
 		function marquerCommeJouee(fullSource, numeroDonne) {
 		
-			// Clé unique pour identifier la donne (ex: chemin + numéro)
-			const cleDonne = `${fullSource}_${numeroDonne}`;
-			
-			// Récupérer la liste existante depuis le localStorage
-			let jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
-			
-			// Si elle n'y est pas déjà, on l'ajoute
-			if (!jouees.includes(cleDonne)) {
-				jouees.push(cleDonne);
-				localStorage.setItem('bridge_donnes_jouees', JSON.stringify(jouees));
-			}
-		}	
+			// clé de storage : bridge_donnes_jouees_<familleActive>
+			const familleActive = typeof familleActuelle !== 'undefined' ? familleActuelle : "defaut";
+			const storageKey = `bridge_donnes_jouees_${familleActive}`;
 
-		//------------------------------------------------------------------------------------
-		// basculerEtatDonne : basculer l'état d'une donne jouée d'une donne
-		//------------------------------------------------------------------------------------
-		function basculerEtatDonne(fullSource, numeroDonne) {
-			const cleDonne = `${fullSource}_${numeroDonne}`;
-			let jouees = JSON.parse(localStorage.getItem('bridge_donnes_jouees')) || [];
+			// Récupérer la liste existante depuis le localStorage
+			let jouees = JSON.parse(localStorage.getItem(storageKey)) || [];
 			
-			const index = jouees.indexOf(cleDonne);
-			if (index > -1) {
-				// Si elle était jouée, on la retire (on la remet en "non jouée")
-				jouees.splice(index, 1);
-			} else {
-				// Sinon, on l'ajoute
-				jouees.push(cleDonne);
-			}
+			// item à mémoriser
+			const donneItem = {
+				fullSource: fullSource,
+				numeroDonne: numeroDonne
+			};
 			
-			// Sauvegarder dans le localStorage
-			localStorage.setItem('bridge_donnes_jouees', JSON.stringify(jouees));
-			
+			// item n'existe pas, on l'ajoute !
+			const existeDeja = jouees.some(item => item.fullSource === fullSource && item.numeroDonne === numeroDonne);	
+			if (!existeDeja) {
+				jouees.push(donneItem);
+				localStorage.setItem(storageKey, JSON.stringify(jouees));
+			}		
+
 			// Rafraîchir le tableau pour mettre à jour instantanément les couleurs et les boutons
 			const select = document.getElementById('famille-select');
 			if (select && select.value) {
 				renderTable(select.value);
 			}
+
 		}
 
+		//------------------------------------------------------------------------------------
+		// supprimerMarqueCommeJouee : retire le fait qu'une donne a été jouée
+		//------------------------------------------------------------------------------------
+		function supprimerMarqueCommeJouee(fullSource, numeroDonne) {
+		
+			// clé de storage : bridge_donnes_jouees_<familleActive>
+			const familleActive = typeof familleActuelle !== 'undefined' ? familleActuelle : "defaut";
+			const storageKey = `bridge_donnes_jouees_${familleActive}`;
+
+			// Récupérer la liste existante depuis le localStorage
+			let jouees = JSON.parse(localStorage.getItem(storageKey)) || [];
+			
+			// Filtrer le tableau pour exclure la donne ciblée
+			const joueesFiltrees = jouees.filter(item => 
+				!(item.fullSource === fullSource && item.numeroDonne === numeroDonne)
+			);
+			
+			// Mettre à jour le localStorage avec la nouvelle liste
+			localStorage.setItem(storageKey, JSON.stringify(joueesFiltrees));
+
+			// Rafraîchir le tableau pour mettre à jour instantanément les couleurs et les boutons
+			const select = document.getElementById('famille-select');
+			if (select && select.value) {
+				renderTable(select.value);
+			}
+
+		}
+		
 		//------------------------------------------------------------------------------------
 		// onFamilleChange : Fonction déclenchée lors du changement de famille dans le menu déroulant
 		//------------------------------------------------------------------------------------
@@ -308,14 +330,41 @@
 			}
 		}
 
+		//------------------------------------------------------------------------------------
+		// reinitialiserFamilleActive : supprimer les donnes joues pour cette famille dans localstorage
+		//------------------------------------------------------------------------------------
+		function reinitialiserFamilleActive() {
+		
+			// Récupère la famille active (en adaptant le nom de ta variable globale si besoin)
+			const familleActive = typeof familleActuelle !== 'undefined' ? familleActive : "defaut";
+			const storageKey = `bridge_donnes_jouees_${familleActive}`;
+
+			// Demander une confirmation pour éviter les clics malencontreux
+			if (confirm(`Voulez-vous vraiment considérer toutes les donnes de cette famille comme non jouées ?`)) {
+				// Supprimer la clé du localStorage
+				localStorage.removeItem(storageKey);
+
+				// Rafraîchir le tableau pour mettre à jour instantanément les couleurs et les boutons
+				const select = document.getElementById('famille-select');
+				if (select && select.value) {
+					renderTable(select.value);
+				}
+				
+			}
+		}
+
+// Branchement sur ton nouveau bouton de réinitialisation
+document.getElementById("btn-reset-famille")?.addEventListener("click", reinitialiserFamilleActive);
+
 	// Écouter le changement de sélection dans le menu déroulant
 	document.getElementById('famille-select')?.addEventListener('change', mettreAJourLienExcel);
 
 	// Appeler la fonction au chargement de la page pour initialiser le lien
 	document.addEventListener('DOMContentLoaded', mettreAJourLienExcel);
 
-	// Relier au bouton
+	// Relier les boutons aux fonctions
 	document.getElementById("btn-hasard")?.addEventListener("click", tirerDonneAuHasard);	
+	document.getElementById("btn-reset-famille")?.addEventListener("click", reinitialiserFamilleActive);
 	
     </script>
 </body>
