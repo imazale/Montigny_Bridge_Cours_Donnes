@@ -49,7 +49,7 @@
 					</button>	
 
 					<!-- id="btn-reset-famille" : Réinitialiser les donnes jouées pour cette famille -->
-					<button id="btn-reset-famille" class="bg-rose-600 hover:bg-rose-700 text-white font-medium px-4 py-2 rounded-lg transition-colors">
+					<button id="btn-reset-famille" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition inline-flex items-center gap-1.5">
 						Réinitialiser les donnes jouées pour cette famille
 					</button>					
 				</div>
@@ -222,6 +222,9 @@
 		//------------------------------------------------------------------------------------
 		function marquerCommeJouee(fullSource, numeroDonne) {
 		
+			console.log("marquerCommeJouee fullSource :", fullSource);
+			console.log("marquerCommeJouee numeroDonne :", numeroDonne);
+		
 			// clé de storage : bridge_donnes_jouees_<familleActive>
 			const familleActive = typeof familleActuelle !== 'undefined' ? familleActuelle : "defaut";
 			const storageKey = `bridge_donnes_jouees_${familleActive}`;
@@ -254,6 +257,9 @@
 		// supprimerMarqueCommeJouee : retire le fait qu'une donne a été jouée
 		//------------------------------------------------------------------------------------
 		function supprimerMarqueCommeJouee(fullSource, numeroDonne) {
+
+			console.log("supprimerCommeJouee fullSource :", fullSource);
+			console.log("supprimerCommeJouee numeroDonne :", numeroDonne);
 		
 			// clé de storage : bridge_donnes_jouees_<familleActive>
 			const familleActive = typeof familleActuelle !== 'undefined' ? familleActuelle : "defaut";
