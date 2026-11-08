@@ -142,9 +142,7 @@
 			tbody.innerHTML = ""; // Vider le tableau
 			
 			const storageKey = `bridge_donnes_jouees_${familleSelectionnee}`;
-			console.log("renderTable storageKey:", storageKey);
 			let jouees = JSON.parse(localStorage.getItem(storageKey)) || [];
-			console.log("renderTable nb jouees:", jouees.length);
 
 			// Filtrer les lignes qui correspondent à la famille sélectionnée
 			const lignesFiltrees = allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleSelectionnee);
@@ -159,10 +157,6 @@
 				
 				// Clé unique identique à celle enregistrée au clic sur "Jouer"
 				const dejaJouee = jouees.some(item => item.fullSource === row.FULL_SOURCE && item.numeroDonne === row.DONNE);
-				console.log("renderTable fullsource:", row.FULL_SOURCE);
-				console.log("renderTable numero:", row.DONNE);
-				console.log("renderTable dejaJouee:", dejaJouee);
-				console.log("---", "---");
 
 				// Appliquer la couleur de fond verte si déjà jouée
 				tr.className = dejaJouee 
@@ -328,13 +322,14 @@
 		//------------------------------------------------------------------------------------
 		function reinitialiserFamilleActive() {
 		
-			// Récupère la famille active (en adaptant le nom de ta variable globale si besoin)
-			const familleActive = typeof familleActuelle !== 'undefined' ? familleActive : "defaut";
-			const storageKey = `bridge_donnes_jouees_${familleActive}`;
+			// Construire la storagekey en fonction de la famille active
+			famille = document.getElementById('famille-select').value;
+			const storageKey = `bridge_donnes_jouees_${famille}`;
 
 			// Demander une confirmation pour éviter les clics malencontreux
 			if (confirm(`Voulez-vous vraiment considérer toutes les donnes de cette famille comme non jouées ?`)) {
 				// Supprimer la clé du localStorage
+				console.log("reinitialiserFamilleActive storageKey à supprimer :", storageKey);
 				localStorage.removeItem(storageKey);
 
 				// Rafraîchir le tableau pour mettre à jour instantanément les couleurs et les boutons
