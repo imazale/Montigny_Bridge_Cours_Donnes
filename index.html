@@ -135,11 +135,16 @@
 		// remplit le tableau des donnes (table-body) et le nb de donnes (total-donnes)
 		//------------------------------------------------------------------------------------
 		function renderTable(familleSelectionnee) {
+		
+			console.log("renderTable :", familleSelectionnee);
+		
 			const tbody = document.getElementById('table-body');
 			tbody.innerHTML = ""; // Vider le tableau
 			
 			const storageKey = `bridge_donnes_jouees_${familleSelectionnee}`;
+			console.log("renderTable storageKey:", storageKey);
 			let jouees = JSON.parse(localStorage.getItem(storageKey)) || [];
+			console.log("renderTable nb jouees:", jouees.length);
 
 			// Filtrer les lignes qui correspondent à la famille sélectionnée
 			const lignesFiltrees = allData.filter(row => row.FAMILLE && row.FAMILLE.trim() === familleSelectionnee);
@@ -153,8 +158,7 @@
 				const tr = document.createElement('tr');
 				
 				// Clé unique identique à celle enregistrée au clic sur "Jouer"
-				const cleDonne = `${row.FULL_SOURCE}_${row.DONNE}`;
-				const dejaJouee = jouees.includes(cleDonne);
+				const dejaJouee = jouees.some(item => item.fullSource === ${row.FULL_SOURCE} && item.numeroDonne === ${row.DONNE});	
 
 				// Appliquer la couleur de fond verte si déjà jouée
 				tr.className = dejaJouee 
@@ -190,7 +194,7 @@
 		// tirerDonneAuHasard : Se positionne sur une donne du tableau en cours de façon aléatoire
 		//------------------------------------------------------------------------------------
 		function tirerDonneAuHasard() {
-
+		
 			// récupérer table_body
 			const lignesVisibles = document.querySelectorAll("#table-body tr");
 			if (lignesVisibles.length === 0) {
