@@ -355,7 +355,7 @@
 		renderTable(familleSelectionnee);
 	}	
 
-	// Fonction pour générer et télécharger un vrai fichier Excel (.xlsx) avec des liens cliquables fonctionnels
+	// Fonction pour générer et télécharger un vrai fichier Excel (.xlsx) propre et cliquable
 	function telechargerExcel() {
 		const select = document.getElementById('famille-select');
 		const familleActive = select ? select.value.trim() : "";
@@ -372,12 +372,12 @@
 			return;
 		}
 
-		// 1. En-têtes du fichier Excel
+		// 1. En-têtes de la feuille
 		const aoa = [
 			["FAMILLE", "FICHIER", "DONNE", "LIEN_BRIDGE_TRAINING", "LIEN_COMMENTAIRES"]
 		];
 
-		const formulasMeta = [];
+		const liensMeta = [];
 
 		donneesAExporter.forEach(row => {
 			const famille = row.FAMILLE || "";
@@ -386,37 +386,43 @@
 			const urlBridge = row.LINK ? row.LINK.trim() : "";
 			const urlCommentaires = row.FILE ? `${BASE_URL_GITHUB}${row.FILE}` : "";
 
-			// On ajoute des lignes de texte vides au départ dans le tableau
-			aoa.push([famille, fichier, donne, "", ""]);
+			// On remplit le tableau de base avec du texte simple
+			aoa.push([
+				famille,
+				fichier,
+				donne,
+				urlBridge !== "" ? "Jouer" : "",
+				urlCommentaires !== "" ? "Commentaires" : ""
+			]);
 
-			// On prépare les formules Excel associées pour chaque lien
-			formulasMeta.push({
-				bridge: urlBridge !== "" ? `LIEN_HYPERTEXTE("${urlBridge}"; "Jouer")` : "",
-				commentaires: urlCommentaires !== "" ? `LIEN_HYPERTEXTE("${urlCommentaires}"; "Commentaires")` : ""
+			liensMeta.push({
+				bridge: urlBridge,
+				commentaires: urlCommentaires
 			});
 		});
 
-		// 2. Créer la feuille à partir du tableau
+		// 2. Créer la feuille Excel
 		const worksheet = XLSX.utils.aoa_to_sheet(aoa);
 
-		// 3. Injecter les formules de liens hypertextes propres et cliquables
-		formulasMeta.forEach((meta, index) => {
+		// 3. Transformer les cellules texte en vrais hyperliens natifs Excel
+		liensMeta.forEach((meta, index) => {
 			const rowIndex = index + 1; // Ligne 0 = en-tête
 
-			// Colonne D (LIEN_BRIDGE_TRAINING)
+			// Colonne D (index 3) -> LIEN_BRIDGE_TRAINING
 			if (meta.bridge) {
 				const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: 3 });
-				if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
-				worksheet[cellRef].f = meta.bridge; // Définition de la formule Excel
-				delete worksheet[cellRef].v;      // SheetJS recalcule la valeur à l'ouverture
+				if (worksheet[cellRef]) {
+					// Définition de l'objet lien natif propre pour SheetJS/Excel
+					worksheet[cellRef].l = { Target: meta.bridge, Tooltip: meta.bridge };
+				}
 			}
 
-			// Colonne E (LIEN_COMMENTAIRES)
+			// Colonne E (index 4) -> LIEN_COMMENTAIRES
 			if (meta.commentaires) {
 				const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: 4 });
-				if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
-				worksheet[cellRef].f = meta.commentaires;
-				delete worksheet[cellRef].v;
+				if (worksheet[cellRef]) {
+					worksheet[cellRef].l = { Target: meta.commentaires, Tooltip: meta.commentaires };
+				}
 			}
 		});
 
