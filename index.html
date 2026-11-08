@@ -193,6 +193,11 @@
 		//------------------------------------------------------------------------------------
 		function tirerDonneAuHasard() {
 		
+			// récupérer les jouées
+			const famille = document.getElementById('famille-select').value;
+			const storageKey = `bridge_donnes_jouees_${famille}`;
+			let jouees = JSON.parse(localStorage.getItem(storageKey)) || [];
+		
 			// récupérer table_body
 			const lignesVisibles = document.querySelectorAll("#table-body tr");
 			if (lignesVisibles.length === 0) {
@@ -200,11 +205,23 @@
 				return;
 			}
 
-			// tirer un index aléatoire
-			const indexAleatoire = Math.floor(Math.random() * lignesVisibles.length);
-			const ligneCible = lignesVisibles[indexAleatoire];
+			// Donnes non jouées
+			const lignesNonJouees = Array.from(lignesVisibles).filter(ligne => {
+				// Option simple : vérifier si la ligne ne possède pas la classe visuelle "jouée"
+				// Ou comparer directement avec la liste des jouées si tu disposes des valeurs row.FULL_SOURCE et row.DONNE
+				return !ligne.classList.contains("bg-slate-200/70");
+			});
 
-			// scroller table-body jusqu'à cet index aléatoire
+			if (lignesNonJouees.length === 0) {
+				alert("Bravo ! Toutes les donnes de cette famille ont déjà été jouées 🎉");
+				return;
+			}
+	
+			// tirer un index aléatoire
+			const indexAleatoire = Math.floor(Math.random() * lignesNonJouees.length);
+			const ligneCible = lignesNonJouees[indexAleatoire];
+
+			// scroller table-body jusqu'à cette ligne cible
 			ligneCible.scrollIntoView({
 				behavior: "smooth",
 				block: "start"
