@@ -359,7 +359,7 @@
 	// Fonction pour nettoyer le nom de la famille de la même manière qu'en Python
 	function nettoyerNomFamille(famille) {
 		if (!famille) return "toutes_les_donnes"; // ou un nom par défaut global si besoin
-		return famille.replace(/[^a-zA-Z0-9 _-]/g, "_").trim();
+		return famille.replace(/[^\w\sÀ-ÿ-]/g, "_").trim();
 	}
 
 	function mettreAJourLienExcel() {
