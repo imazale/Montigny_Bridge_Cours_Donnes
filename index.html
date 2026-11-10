@@ -61,6 +61,7 @@
                         <th class="py-3 px-4 font-semibold">Source</th>
                         <th class="py-3 px-4 font-semibold">Donne</th>
                         <th class="py-3 px-4 font-semibold text-center">Actions</th>
+						<th class="py-3 px-4 font-semibold text-center">Cible</th>
                         <th class="py-3 px-4 font-semibold text-center">Commentaires</th>
                     </tr>
                 </thead>
@@ -175,10 +176,9 @@
 				tr.innerHTML = `
 					<td class="py-3 px-4 font-mono text-xs text-slate-600 truncate max-w-xs" title="${row.FULL_SOURCE || ''}">${row.FULL_SOURCE || ''}</td>
 					<td class="py-3 px-4 font-semibold text-slate-700">${row.DONNE || ''}</td>
-					<td class="py-3 px-4 text-center">
-						${lienHtml}
-						${annulerHtml}
-					</td>
+					<td class="py-3 px-4 text-center">${lienHtml}</td>					
+					<td class="py-3 px-4 font-semibold text-slate-700">${row.RESULT || ''}</td>
+					<td class="py-3 px-4 text-center">${annulerHtml}</td>					
 					<td class="py-3 px-4 text-center">
 						<a href="data/${row.FILE}" target="_blank" class="inline-flex items-center px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded-md transition">Commentaires ↗</a>
 					</td>
