@@ -93,10 +93,8 @@
 				// Filtrer les lignes valides
 				allData = results.data.filter(row => row.DONNE && row.DONNE.trim() !== "");
                 console.log("Lignes après filtre :", allData.length);
-				// Filtrer les lignes valides (qui contiennent au moins une donne)
-				allData = results.data.filter(row => row.DONNE && row.DONNE.trim() !== "");
 				
-				// 1. Extraire la liste unique des familles présentes dans le CSV
+				// Récupérer la liste des familles présentes
 				const famillesSet = new Set();
 				allData.forEach(row => {
 					if (row.FAMILLE) {
@@ -116,10 +114,10 @@
 					select.appendChild(option);
 				});
 
-				// 3. Afficher par défaut la première famille de la liste (au lieu de tout afficher)
+				// 3. Afficher par défaut la première famille de la liste ou celle dernièrement mémorisée
 				if (familles.length > 0) {
-					select.value = familles[0];
-					renderTable(familles[0]);
+					select.value = localStorage.getItem('bridge_famille_active') || "familles[0];
+					renderTable(select.value);
 					mettreAJourLienExcel();
 				}
 
@@ -294,10 +292,14 @@
 		// onFamilleChange : Fonction déclenchée lors du changement de famille dans le menu déroulant
 		//------------------------------------------------------------------------------------
 		function onFamilleChange(famille) {
+		
 			// Nettoyer les espaces superflus de la famille sélectionnée
 			const familleSelectionnee = famille ? famille.trim() : "";
+			
+			// Conserver la famille dans le localstorage
+			localStorage.setItem('bridge_famille_active', familleSelectionnee);
 
-			// 2. Mettre à jour le tableau principal avec la nouvelle famille
+			// Mettre à jour le tableau principal
 			renderTable(familleSelectionnee);
 		}	
 
