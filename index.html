@@ -115,8 +115,9 @@
 				});
 
 				// 3. Afficher par défaut la première famille de la liste ou celle dernièrement mémorisée
+				
 				if (familles.length > 0) {
-					select.value = localStorage.getItem('bridge_famille_active') || "familles[0];
+					select.value = localStorage.getItem('bridge_famille_active') || familles[0];
 					renderTable(select.value);
 					mettreAJourLienExcel();
 				}
